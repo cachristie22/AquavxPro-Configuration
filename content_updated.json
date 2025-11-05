@@ -1008,7 +1008,8 @@
       {
         "title": "Overview",
         "content": [
-          "The Pump Control feature in your Aquavx Pro system manages how the system  automatically turns on and off pumps to control liquid levels in a tank or wet well. This guide explains how to review and change pump settings using the controller's built-in display and buttons."
+          "The Pump Control feature in your Aquavx Pro system manages how the system  automatically turns on and off pumps to control liquid levels in a tank or wet well. This guide explains how to review and change pump settings using the controller's built-in display and buttons.",
+          "Here is a link to a useful reference guide for setting up different pump control scenarios: <a href='images/pumpcontrolexamples.pdf' target='_blank'>Pump Control Scenarios.</a>"
         ],
         "lists": [],
         "tables": [],
