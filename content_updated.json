@@ -610,7 +610,7 @@
       }
     ],
     "content": [
-      "Configure analog input (AIN) on the Aquavx Pro system by navigating the the ADC configuration menu:q"
+      "Configure analog inputs (AIN) on the Aquavx Pro system by navigating the the ADC configuration menu. In this section you are configuring the data registers for the analog inputs, including scaling, type of input, etc. These data registers are mapped to the Analog Input channels above. By default, analog channels 51 - 55 are mapped to AIN 1 - 5 data registers."
     ],
     "lists": [],
     "tables": [],
