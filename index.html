@@ -3,184 +3,518 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analog Input Configuration</title>
+    <title>Aquavx Pro User Guide</title>
     <style>
-        body {
-            font-family: Helvetica, Arial, sans-serif;
-            background-color: white;
+        * {
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-size: 14px;
-        }
-        .container {
-            background-color: white;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
-        }
-        h1, h2 {
-            color: #333;
-            margin: 0 0 10px;
-        }
-        label {
-            display: block;
-            margin: 6px 0 2px;
-        }
-        input, select, button {
-            width: 100%;
-            padding: 6px;
-            margin-bottom: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
             box-sizing: border-box;
-            font-size: 14px;
         }
-        button {
-            background-color: #007BFF;
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #64748b;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border-color: #e2e8f0;
+            --sidebar-width: 280px;
+            --header-height: 70px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .header-subtitle {
+            margin-left: 1rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Search Bar */
+        .search-container {
+            margin-left: auto;
+            position: relative;
+        }
+
+        .search-input {
+            width: 300px;
+            padding: 0.6rem 2.5rem 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .search-result-item:hover {
+            background: var(--bg-light);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .search-result-excerpt {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            margin-top: var(--header-height);
+            min-height: calc(100vh - var(--header-height));
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: var(--header-height);
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: var(--bg-white);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 1.5rem 0;
+        }
+
+        .nav-section {
+            padding: 0.4rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dark);
+            font-weight: 500;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-section:hover {
+            background: var(--bg-light);
+            color: var(--primary-color);
+        }
+
+        .nav-section.active {
+            background: var(--bg-light);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-subsection {
+            padding: 0.3rem 1.5rem 0.3rem 2.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .nav-subsection:hover {
+            color: var(--primary-color);
+            background: var(--bg-light);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 2rem;
+            max-width: 900px;
+        }
+
+        .content-section {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-section h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .content-section h2 {
+            color: var(--text-dark);
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .content-section p {
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+            line-height: 1.8;
+        }
+
+        .content-section ul, .content-section ol {
+            margin: 1rem 0 1rem 2rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+            line-height: 1.7;
+        }
+
+        /* Tables */
+        .content-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: var(--bg-white);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .content-table th {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.9rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .content-table td {
+            padding: 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            line-height: 1.6;
+        }
+
+        .content-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .content-table tr:nth-child(even) {
+            background: var(--bg-light);
+        }
+
+        /* Images */
+        .content-image {
+            max-width: 100%;
+            height: auto;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: block;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        /* Videos */
+        .content-video {
+            max-width: 100%;
+            height: auto;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: block;
+            background: #000;
+        }
+
+        /* YouTube Embeds */
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .youtube-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        .media-caption {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        .media-caption a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+        .media-caption a:hover {
+            text-decoration: underline;
+        }
+
+        /* Lists */
+        .content-list {
+            background: var(--bg-light);
+            padding: 1.5rem 1.5rem 1.5rem 3rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .content-list ul {
+            margin: 0;
+        }
+
+        .content-list li {
+            margin-bottom: 0.7rem;
+            color: var(--text-dark);
+        }
+
+        .content-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Links */
+        .content-section a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .content-section a:hover {
+            color: var(--primary-dark);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .content-section a:visited {
+            color: var(--primary-color);
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .nav-button {
+            padding: 0.8rem 1.5rem;
+            background: var(--primary-color);
             color: white;
             border: none;
+            border-radius: 8px;
             cursor: pointer;
-            padding: 10px;
-            margin-top: 10px;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        button:hover {
-            background-color: #0056b3;
+
+        .nav-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        pre {
-            background-color: #f8f8f8;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            font-size: 14px;
+
+        .nav-button:disabled {
+            background: var(--secondary-color);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .nav-button:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Intro Section Styling */
+        .intro-section {
+            display: block !important;
+        }
+
+        .intro-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .intro-title {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .intro-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+                z-index: 999;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .search-input {
+                width: 200px;
+            }
+
+            .header h1 {
+                font-size: 1.2rem;
+            }
+
+            .header-subtitle {
+                display: none;
+            }
+        }
+
+        .highlight {
+            background-color: yellow;
+            padding: 0 2px;
+        }
+
+        .no-results {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-light);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Configure Analog Input</h1>
-        <form id="analogForm">
-            <div id="inputsContainer">
-                <!-- JavaScript will populate this with input forms -->
-            </div>
-            <button type="button" onclick="addInput()">Add Analog Input</button>
-            <button type="button" onclick="generateConfigStrings()">Generate Configuration Strings</button>
-        </form>
-        <h2>Configuration Strings:</h2>
-        <pre id="configStringsOutput"></pre>
+    <div class="header">
+        <h1>Aquavx Pro</h1>
+        <span class="header-subtitle">User Guide</span>
+        
+        <div class="search-container">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchInput" 
+                placeholder="Search documentation..."
+                autocomplete="off"
+            >
+            <span class="search-icon">🔍</span>
+            <div class="search-results" id="searchResults"></div>
+        </div>
     </div>
 
-    <script>
-        let analogInputCount = 0;
+    <div class="container">
+        <nav class="sidebar" id="sidebar">
+            <!-- Navigation will be populated by JavaScript -->
+        </nav>
 
-        function addInput() {
-            if (analogInputCount >= 5) {
-                alert("You can only add up to 5 analog inputs.");
-                return;
-            }
-            analogInputCount++;
+        <main class="main-content" id="mainContent">
+            <!-- Content will be populated by JavaScript -->
+        </main>
+    </div>
 
-            const container = document.getElementById('inputsContainer');
-            const div = document.createElement('div');
-            div.id = `analogInput_${analogInputCount}`;
-            div.innerHTML = `
-                <h2>Analog Input ${analogInputCount}</h2>
-                <div>
-                    <label for="name_${analogInputCount}">ADC Input Name (max 31 chars)</label>
-                    <input type="text" id="name_${analogInputCount}" maxlength="31">
-                </div>
-                <div>
-                    <label for="input_type_${analogInputCount}">Input Type</label>
-                    <select id="input_type_${analogInputCount}">
-                        <option value="0">0=none</option>
-                        <option value="1">1=0-20mA</option>
-                        <option value="2">2=4-20mA</option>
-                        <option value="3">3=0-5v</option>
-                        <option value="4">4=1-5v</option>
-                        <option value="5">5=+/-600ACV</option>
-                        <option value="6">6=+/-5AAC</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="damping_factor_${analogInputCount}">Damping Factor (0.0-1.0)</label>
-                    <input type="number" step="0.01" id="damping_factor_${analogInputCount}">
-                </div>
-                <div>
-                    <label for="zero_scale_engr_${analogInputCount}">Engineering Units Zero Scale</label>
-                    <input type="number" step="0.01" id="zero_scale_engr_${analogInputCount}">
-                </div>
-                <div>
-                    <label for="full_scale_engr_${analogInputCount}">Engineering Units Full Scale</label>
-                    <input type="number" step="0.01" id="full_scale_engr_${analogInputCount}">
-                </div>
-                <div>
-                    <label for="disp_precision_${analogInputCount}">Display Precision (0-8)</label>
-                    <input type="number" id="disp_precision_${analogInputCount}">
-                </div>
-                <div>
-                    <label for="enable_${analogInputCount}">Enable (yes/no)</label>
-                    <select id="enable_${analogInputCount}">
-                        <option value="1">Yes</option>
-                        <option value="0">No</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="delta_${analogInputCount}">Delta</label>
-                    <input type="number" step="0.01" id="delta_${analogInputCount}">
-                </div>
-                <div>
-                    <label for="debounce_${analogInputCount}">Debounce (0-3600 seconds)</label>
-                    <input type="number" id="debounce_${analogInputCount}" min="0" max="3600">
-                </div>
-                <div>
-                    <label for="units_${analogInputCount}">Units (max 7 chars)</label>
-                    <input type="text" id="units_${analogInputCount}" maxlength="7">
-                </div>
-            `;
-            container.appendChild(div);
-        }
-
-        function generateConfigStrings() {
-            let configStrings = [];
-            for (let i = 1; i <= analogInputCount; i++) {
-                const name = document.getElementById(`name_${i}`).value;
-                const inputType = parseInt(document.getElementById(`input_type_${i}`).value);
-                const dampingFactor = parseFloat(document.getElementById(`damping_factor_${i}`).value);
-                const zeroScaleEngr = parseFloat(document.getElementById(`zero_scale_engr_${i}`).value);
-                const fullScaleEngr = parseFloat(document.getElementById(`full_scale_engr_${i}`).value);
-                const dispPrecision = parseInt(document.getElementById(`disp_precision_${i}`).value);
-
-                const enable = parseInt(document.getElementById(`enable_${i}`).value);
-                const delta = parseFloat(document.getElementById(`delta_${i}`).value);
-                const debounce = parseInt(document.getElementById(`debounce_${i}`).value);
-                const units = document.getElementById(`units_${i}`).value;
-
-                const rawOffset = 10.0;
-                const zeroCount = 461.0;
-                const fullCount = 2313.0;
-                const zeroRawUnits = 4.0;
-                const fullRawUnits = 20.0;
-
-                const value98First = 100 + i;
-                const value98Second = 1050 + i;
-
-                // First configuration string
-                const configString1 = `11,${i},1,${name},2,${inputType},3,${dampingFactor},4,${zeroScaleEngr},5,${fullScaleEngr},6,${dispPrecision},11,${rawOffset},12,${zeroCount},13,${fullCount},14,${zeroRawUnits},15,${fullRawUnits},98,${value98First}`;
-                configStrings.push(configString1);
-
-                // Second configuration string
-                const configString2 = `9,${50 + i},1,${name},2,${enable},3,2,4,1,5,${100 + i},6,4,9,0,7,${delta},8,${debounce},20,${dispPrecision},21,${units},98,${value98Second}`;
-                configStrings.push(configString2);
-            }
-            document.getElementById('configStringsOutput').innerText = configStrings.join('\n');
-        }
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
