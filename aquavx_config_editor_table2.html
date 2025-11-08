@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aquavx Pro Configuration Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a3a5f 0%, #2c5f9e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .toolbar {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 2px solid #dee2e6;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #2c5f9e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1a3a5f;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.85em;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .content-area {
+            padding: 30px;
+        }
+
+        .section-selector {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-selector label {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #1a3a5f;
+        }
+
+        .section-selector select {
+            flex: 1;
+            max-width: 400px;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            background: white;
+        }
+
+        .section-selector select:focus {
+            outline: none;
+            border-color: #2c5f9e;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #2c5f9e;
+        }
+
+        .section-title {
+            font-size: 1.6em;
+            color: #1a3a5f;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        thead {
+            background: #2c5f9e;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        thead th {
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        tbody tr:nth-child(even):hover {
+            background: #f0f1f2;
+        }
+
+        tbody td {
+            padding: 8px;
+        }
+
+        tbody td input,
+        tbody td select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        tbody td input:focus,
+        tbody td select:focus {
+            outline: none;
+            border-color: #2c5f9e;
+            box-shadow: 0 0 0 2px rgba(44, 95, 158, 0.1);
+        }
+
+        .index-col {
+            width: 50px;
+            text-align: center;
+            font-weight: 600;
+            color: #2c5f9e;
+        }
+
+        .actions-col {
+            width: 80px;
+            text-align: center;
+        }
+
+        .no-config {
+            text-align: center;
+            padding: 60px;
+            color: #6c757d;
+        }
+
+        .no-config h2 {
+            margin-bottom: 10px;
+        }
+
+        .status-message {
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .param-help {
+            font-size: 0.8em;
+            color: #6c757d;
+            display: block;
+            margin-top: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .section-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .section-selector select {
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Aquavx Pro Configuration Editor</h1>
+            <p>Table-Based Configuration Management</p>
+        </div>
+
+        <div class="toolbar">
+            <div class="file-input-wrapper">
+                <label for="fileInput" class="btn btn-primary">📁 Load Config File</label>
+                <input type="file" id="fileInput" accept=".log,.txt,.cfg">
+            </div>
+            <button class="btn btn-secondary" onclick="createNewConfig()">📄 New Config</button>
+            <button class="btn btn-success" onclick="downloadConfig()">💾 Download Config</button>
+            <button class="btn btn-secondary" onclick="showHelp()">❓ Help</button>
+        </div>
+
+        <div class="content-area">
+            <div id="statusMessage" class="status-message"></div>
+
+            <div class="section-selector">
+                <label for="sectionSelect">Select Section:</label>
+                <select id="sectionSelect" onchange="showSection(this.value)">
+                    <option value="">-- Choose a Section --</option>
+                    <option value="serial">Serial Ports (6)</option>
+                    <option value="channels">Channels (9)</option>
+                    <option value="modbus">MODBUS Master (18)</option>
+                    <option value="adc">ADC Inputs (11)</option>
+                    <option value="alarms">Alarms (34)</option>
+                    <option value="pump">Pump Control (39)</option>
+                </select>
+            </div>
+
+            <div id="tableContent">
+                <div class="no-config">
+                    <h2>Welcome to Aquavx Pro Configuration Editor</h2>
+                    <p>Load an existing configuration file or create a new one, then select a section to edit</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration data structure
+        let configData = {
+            serial: [],
+            channels: [
+                {index: 1, name: "Power", enable: 1, type: 2, report: 1, sourceReg: 106, scrollList: 1, delta: 0.5, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "v", zeroLabel: "", oneLabel: ""},
+                {index: 2, name: "Cell Fault", enable: 1, type: 1, report: 1, sourceReg: 1, scrollList: 1, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 3, name: "Comm1 Fault", enable: 1, type: 1, report: 1, sourceReg: 2, scrollList: 1, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 4, name: "Comm2 Fault", enable: 1, type: 1, report: 1, sourceReg: 3, scrollList: 1, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 5, name: "BLE Fault", enable: 1, type: 1, report: 1, sourceReg: 4, scrollList: 1, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 6, name: "Ethernet Fault", enable: 1, type: 1, report: 1, sourceReg: 5, scrollList: 1, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 7, name: "Display Fault", enable: 1, type: 1, report: 1, sourceReg: 6, scrollList: 1, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 8, name: "PCB Temperature", enable: 1, type: 2, report: 1, sourceReg: 107, scrollList: 1, delta: 5.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "degF", zeroLabel: "", oneLabel: ""},
+                {index: 9, name: "User Chan 9", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 10, name: "User Chan 10", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 11, name: "User Chan 11", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 12, name: "User Chan 12", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 13, name: "User Chan 13", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 14, name: "User Chan 14", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 15, name: "User Chan 15", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 16, name: "User Chan 16", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 17, name: "User Chan 17", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 18, name: "User Chan 18", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 19, name: "User Chan 19", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 20, name: "User Chan 20", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 21, name: "Digital Input 1", enable: 1, type: 1, report: 1, sourceReg: 201, scrollList: 2, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 22, name: "Digital Input 2", enable: 1, type: 1, report: 1, sourceReg: 202, scrollList: 2, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 23, name: "Digital Input 3", enable: 1, type: 1, report: 1, sourceReg: 203, scrollList: 2, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 24, name: "Digital Input 4", enable: 1, type: 1, report: 1, sourceReg: 204, scrollList: 2, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 25, name: "Digital Input 5", enable: 1, type: 1, report: 1, sourceReg: 205, scrollList: 2, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 26, name: "Digital Input 6", enable: 1, type: 1, report: 1, sourceReg: 206, scrollList: 2, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 27, name: "Digital Input 7", enable: 1, type: 1, report: 1, sourceReg: 207, scrollList: 2, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 28, name: "Digital Input 8", enable: 1, type: 1, report: 1, sourceReg: 208, scrollList: 2, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 29, name: "Digital Input 9", enable: 1, type: 1, report: 1, sourceReg: 209, scrollList: 3, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 30, name: "Digital Input 10", enable: 1, type: 1, report: 1, sourceReg: 210, scrollList: 3, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 31, name: "User Chan 31", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 32, name: "User Chan 32", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 33, name: "User Chan 33", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 34, name: "User Chan 34", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 35, name: "User Chan 35", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 36, name: "User Chan 36", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 37, name: "User Chan 37", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 38, name: "User Chan 38", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 39, name: "User Chan 39", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 40, name: "User Chan 40", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 41, name: "Pulse Input 1", enable: 1, type: 2, report: 1, sourceReg: 251, scrollList: 3, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "cnt", zeroLabel: "", oneLabel: ""},
+                {index: 42, name: "Pulse Input 2", enable: 1, type: 2, report: 1, sourceReg: 252, scrollList: 3, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "cnt", zeroLabel: "", oneLabel: ""},
+                {index: 43, name: "AC Freq (Hz)", enable: 1, type: 2, report: 1, sourceReg: 263, scrollList: 5, delta: 500.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "hz", zeroLabel: "", oneLabel: ""},
+                {index: 44, name: "User Chan 44", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 45, name: "User Chan 45", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 46, name: "User Chan 46", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 47, name: "User Chan 47", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 48, name: "User Chan 48", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 49, name: "User Chan 49", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 50, name: "User Chan 50", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 51, name: "Analog Input 1", enable: 1, type: 2, report: 1, sourceReg: 101, scrollList: 4, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "units", zeroLabel: "", oneLabel: ""},
+                {index: 52, name: "Analog Input 2", enable: 1, type: 2, report: 1, sourceReg: 102, scrollList: 4, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "units", zeroLabel: "", oneLabel: ""},
+                {index: 53, name: "User Chan 53", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 54, name: "User Chan 54", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 55, name: "User Chan 55", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 56, name: "AC-VoltA", enable: 1, type: 2, report: 1, sourceReg: 108, scrollList: 5, delta: 10.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "v", zeroLabel: "", oneLabel: ""},
+                {index: 57, name: "AC-VoltB", enable: 1, type: 2, report: 1, sourceReg: 109, scrollList: 5, delta: 10.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "v", zeroLabel: "", oneLabel: ""},
+                {index: 58, name: "AC-VoltC", enable: 1, type: 2, report: 1, sourceReg: 110, scrollList: 5, delta: 10.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "v", zeroLabel: "", oneLabel: ""},
+                {index: 59, name: "AC-CurrA", enable: 1, type: 2, report: 1, sourceReg: 111, scrollList: 5, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "amp", zeroLabel: "", oneLabel: ""},
+                {index: 60, name: "AC-CurrB", enable: 1, type: 2, report: 1, sourceReg: 112, scrollList: 5, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "amp", zeroLabel: "", oneLabel: ""},
+                {index: 61, name: "AC-CurrC", enable: 1, type: 2, report: 1, sourceReg: 113, scrollList: 5, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "amp", zeroLabel: "", oneLabel: ""},
+                {index: 62, name: "User Chan 62", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 63, name: "User Chan 63", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 64, name: "User Chan 64", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 65, name: "Analog Output 1", enable: 1, type: 2, report: 1, sourceReg: 151, scrollList: 4, delta: 1.0, debounce: 0, pumpPage: 0, precision: 1, bitNumber: 0, units: "units", zeroLabel: "", oneLabel: ""},
+                {index: 66, name: "User Chan 66", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 67, name: "User Chan 67", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 68, name: "User Chan 68", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 69, name: "User Chan 69", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 70, name: "User Chan 70", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 71, name: "Digital Output 1", enable: 1, type: 1, report: 1, sourceReg: 301, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 72, name: "Digital Output 2", enable: 1, type: 1, report: 1, sourceReg: 302, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 73, name: "User Chan 73", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 74, name: "User Chan 74", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 75, name: "User Chan 75", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 76, name: "Digital Output 6", enable: 1, type: 1, report: 0, sourceReg: 306, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 77, name: "User Chan 77", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 78, name: "User Chan 78", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 79, name: "User Chan 79", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 80, name: "User Chan 80", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 81, name: "User Chan 81", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 82, name: "User Chan 82", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 83, name: "User Chan 83", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 84, name: "User Chan 84", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 85, name: "User Chan 85", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 86, name: "User Chan 86", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 87, name: "User Chan 87", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 88, name: "User Chan 88", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 89, name: "User Chan 89", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 90, name: "User Chan 90", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 91, name: "User Chan 91", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 92, name: "User Chan 92", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 93, name: "User Chan 93", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 94, name: "User Chan 94", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 95, name: "User Chan 95", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 96, name: "User Chan 96", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 97, name: "User Chan 97", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 98, name: "User Chan 98", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 99, name: "User Chan 99", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 100, name: "User Chan 100", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+            ],
+            modbus: [],
+            modbus: [],
+            adc: [],
+            alarms: [],
+            pump: null
+        };
+
+        let currentSection = '';
+
+        // Dropdown options
+        const dropdowns = {
+            enable: {0: 'Disabled', 1: 'Enabled'},
+            portMode: {0: 'None', 1: 'Debug', 2: 'Cell', 3: 'Master', 4: 'Slave', 5: 'Satellite', 6: 'Bluetooth'},
+            interface: {0: 'RS232', 1: 'RS485'},
+            baud: {1200: '1200', 2400: '2400', 4800: '4800', 9600: '9600', 19200: '19200', 38400: '38400', 57600: '57600', 115200: '115200'},
+            dataBits: {7: '7', 8: '8', 9: '9'},
+            stopBits: {1: '1', 2: '2'},
+            parity: {0: 'None', 1: 'Odd', 2: 'Even'},
+            channelType: {1: 'Digital', 2: 'Analog'},
+            adcInputType: {0: 'None', 1: '0-20mA', 2: '4-20mA', 3: '0-5v', 4: '1-5v', 5: '+/-600ACV', 6: '+/-5AAC'},
+            linkType: {0: 'RTU', 1: 'TCP'},
+            functionCode: {
+                1: '1-Read Coil(0x)', 
+                2: '2-Read Status(1x)', 
+                3: '3-Read Hold(4x)', 
+                4: '4-Read Input(3x)',
+                5: '5-Write Coil(0x)',
+                6: '6-Write Hold(4x)',
+                15: '15-Write Multi Coil(0x)',
+                16: '16-Write Multi Hold(4x)'
+            },
+            registerType: {0: 'reg16', 1: 'reg32', 2: 'bit16', 3: 'bit32', 4: 'packed16', 5: 'packed32', 6: 'float32'},
+            endian: {0: 'LSB first', 1: 'MSB first'},
+            alarmType: {0: 'Standard', 1: 'Latched'},
+            limitType: {0: 'Low Limit', 1: 'High Limit'},
+            roster: {0: 'None', 1: 'Standard', 2: 'Priority'},
+            pumpMode: {0: 'Drain', 1: 'Fill'},
+            sensorType: {0: 'Floats', 1: 'Sensor'},
+            alternation: {0: 'Automatic', 1: 'Manual'},
+            numPumps: {1: 'Simplex', 2: 'Duplex'}
+        };
+
+        // File input handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    parseConfigFile(e.target.result);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function parseConfigFile(content) {
+            const lines = content.split('\n');
+            
+            // Reset config data
+            configData = {
+                serial: [],
+                channels: [],
+                modbus: [],
+                adc: [],
+                alarms: [],
+                pump: null
+            };
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line || line.startsWith('//')) return;
+
+                const parts = line.split(',');
+                const sectionNum = parts[0];
+
+                switch(sectionNum) {
+                    case '6':
+                        parseSerialEntry(parts);
+                        break;
+                    case '9':
+                        parseChannelEntry(parts);
+                        break;
+                    case '18':
+                        parseModbusEntry(parts);
+                        break;
+                    case '11':
+                        parseADCEntry(parts);
+                        break;
+                    case '34':
+                        parseAlarmEntry(parts);
+                        break;
+                    case '39':
+                        parsePumpEntry(parts);
+                        break;
+                }
+            });
+
+            if (currentSection) {
+                showSection(currentSection);
+            }
+            showStatus('Configuration loaded successfully!', 'success');
+        }
+
+        function parseSerialEntry(parts) {
+            configData.serial.push({
+                index: parseInt(parts[1]),
+                name: parts[3],
+                enable: parseInt(parts[5]),
+                mode: parseInt(parts[7]),
+                interface: parseInt(parts[9]),
+                baud: parseInt(parts[11]),
+                maxIdle: parseInt(parts[13]),
+                responseTimeout: parseInt(parts[15]),
+                dataBits: parseInt(parts[17]),
+                stopBits: parseInt(parts[19]),
+                parity: parseInt(parts[21]),
+                txOnDelay: parseInt(parts[23]),
+                txOffDelay: parseInt(parts[25]),
+                termination: parseInt(parts[27]),
+                flowControl: parseInt(parts[29])
+            });
+        }
+
+        function parseChannelEntry(parts) {
+            const chan = {
+                index: parseInt(parts[1]),
+                name: parts[3],
+                enable: parseInt(parts[5]),
+                type: parseInt(parts[7]),
+                report: parseInt(parts[9]),
+                sourceReg: parseInt(parts[11]),
+                scrollList: parseInt(parts[13]),
+                delta: parseFloat(parts[15]),
+                debounce: parseInt(parts[17]),
+                pumpPage: parseInt(parts[19])
+            };
+
+            // Analog-specific
+            if (chan.type === 2) {
+                chan.precision = parseInt(parts[21]);
+                chan.units = parts[23] || '';
+            }
+            // Digital-specific
+            else if (chan.type === 1) {
+                chan.bitNumber = parseInt(parts[21]);
+                chan.zeroLabel = parts[23] || '';
+                chan.oneLabel = parts[25] || '';
+            }
+
+            configData.channels.push(chan);
+        }
+
+        function parseModbusEntry(parts) {
+            configData.modbus.push({
+                index: parseInt(parts[1]),
+                name: parts[3],
+                enable: parseInt(parts[5]),
+                linkType: parseInt(parts[7]),
+                slaveId: parseInt(parts[9]),
+                functionCode: parseInt(parts[11]),
+                registerAddress: parseInt(parts[13]),
+                registerType: parseInt(parts[15]),
+                bitWeight: parseFloat(parts[17]),
+                offset: parseFloat(parts[19]),
+                signed: parseInt(parts[21]),
+                precision: parseInt(parts[23]),
+                endian: parseInt(parts[25]),
+                bitNumber: parseInt(parts[27]),
+                packedMask: parts[29]
+            });
+        }
+
+        function parseADCEntry(parts) {
+            configData.adc.push({
+                index: parseInt(parts[1]),
+                name: parts[3],
+                inputType: parseInt(parts[5]),
+                dampingFactor: parseFloat(parts[7]),
+                zeroScale: parseFloat(parts[9]),
+                fullScale: parseFloat(parts[11]),
+                precision: parseInt(parts[13]),
+                rawOffset: parseFloat(parts[15]),
+                zeroCount: parseFloat(parts[17]),
+                fullCount: parseFloat(parts[19]),
+                zeroRawUnits: parseFloat(parts[21]),
+                fullRawUnits: parseFloat(parts[23])
+            });
+        }
+
+        function parseAlarmEntry(parts) {
+            configData.alarms.push({
+                index: parseInt(parts[1]),
+                name: parts[3],
+                enable: parseInt(parts[5]),
+                popup: parseInt(parts[7]),
+                type: parseInt(parts[9]),
+                sourceChan: parseInt(parts[11]),
+                precision: parseInt(parts[13]),
+                alarmDelay: parseInt(parts[15]),
+                roster: parseInt(parts[17]),
+                limitType: parseInt(parts[19]),
+                limit: parseFloat(parts[21]),
+                hysteresis: parseFloat(parts[23]),
+                lowFailSafe: parseFloat(parts[25]),
+                highFailSafe: parseFloat(parts[27]),
+                digitalAlarmState: parseInt(parts[29])
+            });
+        }
+
+        function parsePumpEntry(parts) {
+            configData.pump = {
+                enable: parseInt(parts[3]),
+                mode: parseInt(parts[5]),
+                numPumps: parseInt(parts[7]),
+                alternation: parseInt(parts[9]),
+                manualLead: parseInt(parts[11]),
+                hysteresis: parseFloat(parts[13]),
+                sensorType: parseInt(parts[15]),
+                levelSensor: parseInt(parts[17]),
+                pump1Run: parseInt(parts[19]),
+                pump1Fault: parseInt(parts[21]),
+                pump2Run: parseInt(parts[23]),
+                pump2Fault: parseInt(parts[25]),
+                phaseFault: parseInt(parts[27]),
+                lowAlmFloat: parseInt(parts[29]),
+                highAlmFloat: parseInt(parts[31]),
+                leadOnSetpt: parseFloat(parts[33]),
+                lagOnSetpt: parseFloat(parts[35]),
+                allOffSetpt: parseFloat(parts[37]),
+                lowAlmSetpt: parseFloat(parts[39]),
+                highAlmSetpt: parseFloat(parts[41]),
+                debounce: parseInt(parts[43]),
+                startDelay: parseInt(parts[45]),
+                restartDelay: parseInt(parts[47]),
+                dualStartDelay: parseInt(parts[49]),
+                faultAlarmDelay: parseInt(parts[51]),
+                pump1MaxRun: parseInt(parts[53]),
+                pump2MaxRun: parseInt(parts[55])
+            };
+        }
+
+        function createNewConfig() {
+            if (confirm('Create a new configuration? This will clear any existing data.')) {
+                configData = {
+                    serial: [],
+                    channels: [],
+                    modbus: [],
+                    adc: [],
+                    alarms: [],
+                    pump: {
+                        enable: 0, mode: 1, numPumps: 2, alternation: 0, manualLead: 0,
+                        hysteresis: 0.0, sensorType: 1, levelSensor: 0, pump1Run: 0,
+                        pump1Fault: 0, pump2Run: 0, pump2Fault: 0, phaseFault: 0,
+                        lowAlmFloat: 0, highAlmFloat: 0, leadOnSetpt: 35.0,
+                        lagOnSetpt: 40.0, allOffSetpt: 25.0, lowAlmSetpt: -1.0,
+                        highAlmSetpt: -1.0, debounce: 5, startDelay: 3,
+                        restartDelay: 10, dualStartDelay: 5, faultAlarmDelay: 5,
+                        pump1MaxRun: 0, pump2MaxRun: 0
+                    }
+                };
+                if (currentSection) {
+                    showSection(currentSection);
+                }
+                showStatus('New configuration created', 'success');
+            }
+        }
+
+        function showSection(section) {
+            if (!section) return;
+            
+            currentSection = section;
+            document.getElementById('sectionSelect').value = section;
+
+            const content = document.getElementById('tableContent');
+            
+            switch(section) {
+                case 'serial':
+                    content.innerHTML = renderSerialTable();
+                    break;
+                case 'channels':
+                    content.innerHTML = renderChannelsTable();
+                    break;
+                case 'modbus':
+                    content.innerHTML = renderModbusTable();
+                    break;
+                case 'adc':
+                    content.innerHTML = renderADCTable();
+                    break;
+                case 'alarms':
+                    content.innerHTML = renderAlarmsTable();
+                    break;
+                case 'pump':
+                    content.innerHTML = renderPumpTable();
+                    break;
+            }
+        }
+
+        function renderSerialTable() {
+            let html = `
+                <div class="section-header">
+                    <h2 class="section-title">Serial Ports Configuration (${configData.serial.length} entries)</h2>
+                    <button class="btn btn-primary" onclick="addSerialEntry()">+ Add Entry</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="index-col">#</th>
+                                <th>Name</th>
+                                <th>Enable</th>
+                                <th>Mode</th>
+                                <th>Interface</th>
+                                <th>Baud</th>
+                                <th>Max Idle (ms)</th>
+                                <th>Timeout (s)</th>
+                                <th>Data Bits</th>
+                                <th>Stop Bits</th>
+                                <th>Parity</th>
+                                <th>Tx On Delay</th>
+                                <th>Tx Off Delay</th>
+                                <th>Termination</th>
+                                <th>Flow Control</th>
+                                <th class="actions-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (configData.serial.length === 0) {
+                html += '<tr><td colspan="16" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+            } else {
+                configData.serial.forEach((entry, idx) => {
+                    html += `
+                        <tr>
+                            <td class="index-col">${entry.index}</td>
+                            <td><input type="text" value="${entry.name}" onchange="updateField('serial', ${idx}, 'name', this.value)"></td>
+                            <td>${createTableSelect('serial', idx, 'enable', entry.enable, dropdowns.enable)}</td>
+                            <td>${createTableSelect('serial', idx, 'mode', entry.mode, dropdowns.portMode)}</td>
+                            <td>${createTableSelect('serial', idx, 'interface', entry.interface, dropdowns.interface)}</td>
+                            <td>${createTableSelect('serial', idx, 'baud', entry.baud, dropdowns.baud)}</td>
+                            <td><input type="number" value="${entry.maxIdle}" onchange="updateField('serial', ${idx}, 'maxIdle', this.value)"></td>
+                            <td><input type="number" value="${entry.responseTimeout}" onchange="updateField('serial', ${idx}, 'responseTimeout', this.value)"></td>
+                            <td>${createTableSelect('serial', idx, 'dataBits', entry.dataBits, dropdowns.dataBits)}</td>
+                            <td>${createTableSelect('serial', idx, 'stopBits', entry.stopBits, dropdowns.stopBits)}</td>
+                            <td>${createTableSelect('serial', idx, 'parity', entry.parity, dropdowns.parity)}</td>
+                            <td><input type="number" value="${entry.txOnDelay}" onchange="updateField('serial', ${idx}, 'txOnDelay', this.value)"></td>
+                            <td><input type="number" value="${entry.txOffDelay}" onchange="updateField('serial', ${idx}, 'txOffDelay', this.value)"></td>
+                            <td>${createTableSelect('serial', idx, 'termination', entry.termination, dropdowns.enable)}</td>
+                            <td>${createTableSelect('serial', idx, 'flowControl', entry.flowControl, dropdowns.enable)}</td>
+                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('serial', ${idx})">Delete</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderChannelsTable() {
+            let html = `
+                <div class="section-header">
+                    <h2 class="section-title">Channels Configuration (${configData.channels.length} entries)</h2>
+                    <button class="btn btn-primary" onclick="addChannelEntry()">+ Add Entry</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="index-col">#</th>
+                                <th>Name</th>
+                                <th>Enable</th>
+                                <th>Type</th>
+                                <th>Report</th>
+                                <th>Source Reg</th>
+                                <th>Scroll</th>
+                                <th>Delta</th>
+                                <th>Debounce</th>
+                                <th>Pump Page</th>
+                                <th>Precision</th>
+                                <th>Bit#</th>
+                                <th>Units</th>
+                                <th>Zero Label</th>
+                                <th>One Label</th>
+                                <th class="actions-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (configData.channels.length === 0) {
+                html += '<tr><td colspan="16" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+            } else {
+                configData.channels.forEach((entry, idx) => {
+                    html += `
+                        <tr>
+                            <td class="index-col">${entry.index}</td>
+                            <td><input type="text" value="${entry.name}" onchange="updateField('channels', ${idx}, 'name', this.value)"></td>
+                            <td>${createTableSelect('channels', idx, 'enable', entry.enable, dropdowns.enable)}</td>
+                            <td>${createTableSelect('channels', idx, 'type', entry.type, dropdowns.channelType)}</td>
+                            <td>${createTableSelect('channels', idx, 'report', entry.report, dropdowns.enable)}</td>
+                            <td><input type="number" value="${entry.sourceReg}" onchange="updateField('channels', ${idx}, 'sourceReg', this.value)"></td>
+                            <td>${createTableSelect('channels', idx, 'scrollList', entry.scrollList, dropdowns.enable)}</td>
+                            <td><input type="number" step="0.1" value="${entry.delta}" onchange="updateField('channels', ${idx}, 'delta', this.value)"></td>
+                            <td><input type="number" value="${entry.debounce}" onchange="updateField('channels', ${idx}, 'debounce', this.value)"></td>
+                            <td><input type="number" value="${entry.pumpPage}" onchange="updateField('channels', ${idx}, 'pumpPage', this.value)"></td>
+                            <td><input type="number" value="${entry.precision || 0}" onchange="updateField('channels', ${idx}, 'precision', this.value)"></td>
+                            <td><input type="number" value="${entry.bitNumber || 0}" onchange="updateField('channels', ${idx}, 'bitNumber', this.value)"></td>
+                            <td><input type="text" value="${entry.units || ''}" onchange="updateField('channels', ${idx}, 'units', this.value)"></td>
+                            <td><input type="text" value="${entry.zeroLabel || ''}" onchange="updateField('channels', ${idx}, 'zeroLabel', this.value)"></td>
+                            <td><input type="text" value="${entry.oneLabel || ''}" onchange="updateField('channels', ${idx}, 'oneLabel', this.value)"></td>
+                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('channels', ${idx})">Delete</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderModbusTable() {
+            let html = `
+                <div class="section-header">
+                    <h2 class="section-title">MODBUS Master Configuration (${configData.modbus.length} entries)</h2>
+                    <button class="btn btn-primary" onclick="addModbusEntry()">+ Add Entry</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="index-col">#</th>
+                                <th>Name</th>
+                                <th>Enable</th>
+                                <th>Link Type</th>
+                                <th>Slave ID</th>
+                                <th>Function Code</th>
+                                <th>Reg Address</th>
+                                <th>Reg Type</th>
+                                <th>Bit Weight</th>
+                                <th>Offset</th>
+                                <th>Signed</th>
+                                <th>Precision</th>
+                                <th>Endian</th>
+                                <th>Bit #</th>
+                                <th>Mask</th>
+                                <th class="actions-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (configData.modbus.length === 0) {
+                html += '<tr><td colspan="16" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+            } else {
+                configData.modbus.forEach((entry, idx) => {
+                    html += `
+                        <tr>
+                            <td class="index-col">${entry.index}</td>
+                            <td><input type="text" value="${entry.name}" onchange="updateField('modbus', ${idx}, 'name', this.value)"></td>
+                            <td>${createTableSelect('modbus', idx, 'enable', entry.enable, dropdowns.enable)}</td>
+                            <td>${createTableSelect('modbus', idx, 'linkType', entry.linkType, dropdowns.linkType)}</td>
+                            <td><input type="number" value="${entry.slaveId}" onchange="updateField('modbus', ${idx}, 'slaveId', this.value)"></td>
+                            <td>${createTableSelect('modbus', idx, 'functionCode', entry.functionCode, dropdowns.functionCode)}</td>
+                            <td><input type="number" value="${entry.registerAddress}" onchange="updateField('modbus', ${idx}, 'registerAddress', this.value)"></td>
+                            <td>${createTableSelect('modbus', idx, 'registerType', entry.registerType, dropdowns.registerType)}</td>
+                            <td><input type="number" step="0.000001" value="${entry.bitWeight}" onchange="updateField('modbus', ${idx}, 'bitWeight', this.value)"></td>
+                            <td><input type="number" step="0.000001" value="${entry.offset}" onchange="updateField('modbus', ${idx}, 'offset', this.value)"></td>
+                            <td>${createTableSelect('modbus', idx, 'signed', entry.signed, dropdowns.enable)}</td>
+                            <td><input type="number" value="${entry.precision}" onchange="updateField('modbus', ${idx}, 'precision', this.value)"></td>
+                            <td>${createTableSelect('modbus', idx, 'endian', entry.endian, dropdowns.endian)}</td>
+                            <td><input type="number" value="${entry.bitNumber}" onchange="updateField('modbus', ${idx}, 'bitNumber', this.value)"></td>
+                            <td><input type="text" value="${entry.packedMask}" onchange="updateField('modbus', ${idx}, 'packedMask', this.value)"></td>
+                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('modbus', ${idx})">Delete</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderADCTable() {
+            let html = `
+                <div class="section-header">
+                    <h2 class="section-title">ADC Inputs Configuration (${configData.adc.length} entries)</h2>
+                    <button class="btn btn-primary" onclick="addADCEntry()">+ Add Entry</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="index-col">#</th>
+                                <th>Name</th>
+                                <th>Input Type</th>
+                                <th>Damping</th>
+                                <th>Zero Scale</th>
+                                <th>Full Scale</th>
+                                <th>Precision</th>
+                                <th>Raw Offset</th>
+                                <th>Zero Count</th>
+                                <th>Full Count</th>
+                                <th>Zero Raw</th>
+                                <th>Full Raw</th>
+                                <th class="actions-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (configData.adc.length === 0) {
+                html += '<tr><td colspan="13" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+            } else {
+                configData.adc.forEach((entry, idx) => {
+                    html += `
+                        <tr>
+                            <td class="index-col">${entry.index}</td>
+                            <td><input type="text" value="${entry.name}" onchange="updateField('adc', ${idx}, 'name', this.value)"></td>
+                            <td>${createTableSelect('adc', idx, 'inputType', entry.inputType, dropdowns.adcInputType)}</td>
+                            <td><input type="number" step="0.001" value="${entry.dampingFactor}" onchange="updateField('adc', ${idx}, 'dampingFactor', this.value)"></td>
+                            <td><input type="number" step="0.01" value="${entry.zeroScale}" onchange="updateField('adc', ${idx}, 'zeroScale', this.value)"></td>
+                            <td><input type="number" step="0.01" value="${entry.fullScale}" onchange="updateField('adc', ${idx}, 'fullScale', this.value)"></td>
+                            <td><input type="number" value="${entry.precision}" onchange="updateField('adc', ${idx}, 'precision', this.value)"></td>
+                            <td><input type="number" step="0.01" value="${entry.rawOffset}" onchange="updateField('adc', ${idx}, 'rawOffset', this.value)"></td>
+                            <td><input type="number" step="0.01" value="${entry.zeroCount}" onchange="updateField('adc', ${idx}, 'zeroCount', this.value)"></td>
+                            <td><input type="number" step="0.01" value="${entry.fullCount}" onchange="updateField('adc', ${idx}, 'fullCount', this.value)"></td>
+                            <td><input type="number" step="0.01" value="${entry.zeroRawUnits}" onchange="updateField('adc', ${idx}, 'zeroRawUnits', this.value)"></td>
+                            <td><input type="number" step="0.01" value="${entry.fullRawUnits}" onchange="updateField('adc', ${idx}, 'fullRawUnits', this.value)"></td>
+                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('adc', ${idx})">Delete</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderAlarmsTable() {
+            let html = `
+                <div class="section-header">
+                    <h2 class="section-title">Alarms Configuration (${configData.alarms.length} entries)</h2>
+                    <button class="btn btn-primary" onclick="addAlarmEntry()">+ Add Entry</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="index-col">#</th>
+                                <th>Name</th>
+                                <th>Enable</th>
+                                <th>Popup</th>
+                                <th>Type</th>
+                                <th>Source Chan</th>
+                                <th>Precision</th>
+                                <th>Delay (s)</th>
+                                <th>Roster</th>
+                                <th>Limit Type</th>
+                                <th>Limit</th>
+                                <th>Hysteresis</th>
+                                <th>Low FailSafe</th>
+                                <th>High FailSafe</th>
+                                <th>Digital State</th>
+                                <th class="actions-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (configData.alarms.length === 0) {
+                html += '<tr><td colspan="16" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+            } else {
+                configData.alarms.forEach((entry, idx) => {
+                    html += `
+                        <tr>
+                            <td class="index-col">${entry.index}</td>
+                            <td><input type="text" value="${entry.name}" onchange="updateField('alarms', ${idx}, 'name', this.value)"></td>
+                            <td>${createTableSelect('alarms', idx, 'enable', entry.enable, dropdowns.enable)}</td>
+                            <td>${createTableSelect('alarms', idx, 'popup', entry.popup, dropdowns.enable)}</td>
+                            <td>${createTableSelect('alarms', idx, 'type', entry.type, dropdowns.alarmType)}</td>
+                            <td><input type="number" value="${entry.sourceChan}" onchange="updateField('alarms', ${idx}, 'sourceChan', this.value)"></td>
+                            <td><input type="number" value="${entry.precision}" onchange="updateField('alarms', ${idx}, 'precision', this.value)"></td>
+                            <td><input type="number" value="${entry.alarmDelay}" onchange="updateField('alarms', ${idx}, 'alarmDelay', this.value)"></td>
+                            <td>${createTableSelect('alarms', idx, 'roster', entry.roster, dropdowns.roster)}</td>
+                            <td>${createTableSelect('alarms', idx, 'limitType', entry.limitType, dropdowns.limitType)}</td>
+                            <td><input type="number" step="0.1" value="${entry.limit}" onchange="updateField('alarms', ${idx}, 'limit', this.value)"></td>
+                            <td><input type="number" step="0.1" value="${entry.hysteresis}" onchange="updateField('alarms', ${idx}, 'hysteresis', this.value)"></td>
+                            <td><input type="number" step="0.1" value="${entry.lowFailSafe}" onchange="updateField('alarms', ${idx}, 'lowFailSafe', this.value)"></td>
+                            <td><input type="number" step="0.1" value="${entry.highFailSafe}" onchange="updateField('alarms', ${idx}, 'highFailSafe', this.value)"></td>
+                            <td><input type="number" value="${entry.digitalAlarmState}" onchange="updateField('alarms', ${idx}, 'digitalAlarmState', this.value)"></td>
+                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('alarms', ${idx})">Delete</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderPumpTable() {
+            const pump = configData.pump;
+            
+            if (!pump) {
+                return '<div class="no-config"><p>Pump control not configured.</p></div>';
+            }
+
+            let html = `
+                <div class="section-header">
+                    <h2 class="section-title">Pump Control Configuration (1 entry)</h2>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Enable</th>
+                                <th>Mode</th>
+                                <th># Pumps</th>
+                                <th>Alternation</th>
+                                <th>Manual Lead</th>
+                                <th>Hysteresis</th>
+                                <th>Sensor Type</th>
+                                <th>Level Sensor</th>
+                                <th>P1 Run</th>
+                                <th>P1 Fault</th>
+                                <th>P2 Run</th>
+                                <th>P2 Fault</th>
+                                <th>Phase Fault</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>${createTableSelect('pump', 0, 'enable', pump.enable, dropdowns.enable)}</td>
+                                <td>${createTableSelect('pump', 0, 'mode', pump.mode, dropdowns.pumpMode)}</td>
+                                <td>${createTableSelect('pump', 0, 'numPumps', pump.numPumps, dropdowns.numPumps)}</td>
+                                <td>${createTableSelect('pump', 0, 'alternation', pump.alternation, dropdowns.alternation)}</td>
+                                <td><input type="number" value="${pump.manualLead}" onchange="updateField('pump', 0, 'manualLead', this.value)"></td>
+                                <td><input type="number" step="0.1" value="${pump.hysteresis}" onchange="updateField('pump', 0, 'hysteresis', this.value)"></td>
+                                <td>${createTableSelect('pump', 0, 'sensorType', pump.sensorType, dropdowns.sensorType)}</td>
+                                <td><input type="number" value="${pump.levelSensor}" onchange="updateField('pump', 0, 'levelSensor', this.value)"></td>
+                                <td><input type="number" value="${pump.pump1Run}" onchange="updateField('pump', 0, 'pump1Run', this.value)"></td>
+                                <td><input type="number" value="${pump.pump1Fault}" onchange="updateField('pump', 0, 'pump1Fault', this.value)"></td>
+                                <td><input type="number" value="${pump.pump2Run}" onchange="updateField('pump', 0, 'pump2Run', this.value)"></td>
+                                <td><input type="number" value="${pump.pump2Fault}" onchange="updateField('pump', 0, 'pump2Fault', this.value)"></td>
+                                <td><input type="number" value="${pump.phaseFault}" onchange="updateField('pump', 0, 'phaseFault', this.value)"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top: 20px;" class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Low Alm Float</th>
+                                <th>High Alm Float</th>
+                                <th>Lead On</th>
+                                <th>Lag On</th>
+                                <th>All Off</th>
+                                <th>Low Alm</th>
+                                <th>High Alm</th>
+                                <th>Debounce</th>
+                                <th>Start Delay</th>
+                                <th>Restart Delay</th>
+                                <th>Dual Start</th>
+                                <th>Fault Delay</th>
+                                <th>P1 Max</th>
+                                <th>P2 Max</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="number" value="${pump.lowAlmFloat}" onchange="updateField('pump', 0, 'lowAlmFloat', this.value)"></td>
+                                <td><input type="number" value="${pump.highAlmFloat}" onchange="updateField('pump', 0, 'highAlmFloat', this.value)"></td>
+                                <td><input type="number" step="0.1" value="${pump.leadOnSetpt}" onchange="updateField('pump', 0, 'leadOnSetpt', this.value)"></td>
+                                <td><input type="number" step="0.1" value="${pump.lagOnSetpt}" onchange="updateField('pump', 0, 'lagOnSetpt', this.value)"></td>
+                                <td><input type="number" step="0.1" value="${pump.allOffSetpt}" onchange="updateField('pump', 0, 'allOffSetpt', this.value)"></td>
+                                <td><input type="number" step="0.1" value="${pump.lowAlmSetpt}" onchange="updateField('pump', 0, 'lowAlmSetpt', this.value)"></td>
+                                <td><input type="number" step="0.1" value="${pump.highAlmSetpt}" onchange="updateField('pump', 0, 'highAlmSetpt', this.value)"></td>
+                                <td><input type="number" value="${pump.debounce}" onchange="updateField('pump', 0, 'debounce', this.value)"></td>
+                                <td><input type="number" value="${pump.startDelay}" onchange="updateField('pump', 0, 'startDelay', this.value)"></td>
+                                <td><input type="number" value="${pump.restartDelay}" onchange="updateField('pump', 0, 'restartDelay', this.value)"></td>
+                                <td><input type="number" value="${pump.dualStartDelay}" onchange="updateField('pump', 0, 'dualStartDelay', this.value)"></td>
+                                <td><input type="number" value="${pump.faultAlarmDelay}" onchange="updateField('pump', 0, 'faultAlarmDelay', this.value)"></td>
+                                <td><input type="number" value="${pump.pump1MaxRun}" onchange="updateField('pump', 0, 'pump1MaxRun', this.value)"></td>
+                                <td><input type="number" value="${pump.pump2MaxRun}" onchange="updateField('pump', 0, 'pump2MaxRun', this.value)"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function createTableSelect(section, index, field, value, options) {
+            let html = '<select onchange="updateField(\'' + section + '\', ' + index + ', \'' + field + '\', this.value)">';
+            for (let [key, val] of Object.entries(options)) {
+                const selected = key == value ? 'selected' : '';
+                html += `<option value="${key}" ${selected}>${val}</option>`;
+            }
+            html += '</select>';
+            return html;
+        }
+
+        function updateField(section, index, field, value) {
+            if (section === 'pump') {
+                configData.pump[field] = isNaN(value) ? value : (value.includes('.') ? parseFloat(value) : parseInt(value));
+            } else {
+                configData[section][index][field] = isNaN(value) ? value : (value.includes('.') ? parseFloat(value) : parseInt(value));
+            }
+        }
+
+        function deleteEntry(section, index) {
+            if (confirm('Delete this entry?')) {
+                configData[section].splice(index, 1);
+                showSection(currentSection);
+                showStatus('Entry deleted', 'success');
+            }
+        }
+
+        function addSerialEntry() {
+            const newIndex = configData.serial.length + 1;
+            configData.serial.push({
+                index: newIndex, name: `Serial Port ${newIndex}`, enable: 1, mode: 3,
+                interface: 0, baud: 9600, maxIdle: 2, responseTimeout: 2,
+                dataBits: 8, stopBits: 1, parity: 0, txOnDelay: 1,
+                txOffDelay: 1, termination: 0, flowControl: 0
+            });
+            showSection('serial');
+            showStatus('Serial port added', 'success');
+        }
+
+        function addChannelEntry() {
+            const newIndex = configData.channels.length + 1;
+            configData.channels.push({
+                index: newIndex, name: `Channel ${newIndex}`, enable: 0, type: 2,
+                report: 1, sourceReg: 0, scrollList: 0, delta: 0.5,
+                debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, 
+                units: '', zeroLabel: '', oneLabel: ''
+            });
+            showSection('channels');
+            showStatus('Channel added', 'success');
+        }
+
+        function addModbusEntry() {
+            const newIndex = configData.modbus.length + 1;
+            configData.modbus.push({
+                index: newIndex, name: `MBMaster${newIndex}`, enable: 0, linkType: 0,
+                slaveId: 1, functionCode: 3, registerAddress: 1, registerType: 0,
+                bitWeight: 1.0, offset: 0.0, signed: 0, precision: 1,
+                endian: 0, bitNumber: 1, packedMask: 'FFFFFFFF'
+            });
+            showSection('modbus');
+            showStatus('MODBUS register added', 'success');
+        }
+
+        function addADCEntry() {
+            const newIndex = configData.adc.length + 1;
+            configData.adc.push({
+                index: newIndex, name: `ADC${newIndex}`, inputType: 2,
+                dampingFactor: 0.5, zeroScale: 0.0, fullScale: 100.0,
+                precision: 1, rawOffset: 10, zeroCount: 461,
+                fullCount: 2313, zeroRawUnits: 4.0, fullRawUnits: 20.0
+            });
+            showSection('adc');
+            showStatus('ADC input added', 'success');
+        }
+
+        function addAlarmEntry() {
+            const newIndex = configData.alarms.length + 1;
+            configData.alarms.push({
+                index: newIndex, name: `Alarm${newIndex}`, enable: 0, popup: 0,
+                type: 0, sourceChan: 0, precision: 1, alarmDelay: 0,
+                roster: 0, limitType: 0, limit: -1.0, hysteresis: 0.0,
+                lowFailSafe: -1.0, highFailSafe: -1.0, digitalAlarmState: 1
+            });
+            showSection('alarms');
+            showStatus('Alarm added', 'success');
+        }
+
+        function downloadConfig() {
+            let config = '';
+            
+            // Serial Ports
+            if (configData.serial.length > 0) {
+                config += '// ****  Serial Config (6)  **** //\n';
+                config += '// name(1) enable(2) mode(3) interface(4) baud(5) idle(6) tout(7) //\n';
+                config += '// data(8) stop(9) parity(10) ondly(12) offdly(13) term(14) flowcntrl(15) //\n';
+                configData.serial.forEach(s => {
+                    config += `6,${s.index},1,${s.name},2,${s.enable},3,${s.mode},4,${s.interface},5,${s.baud},6,${s.maxIdle},7,${s.responseTimeout},8,${s.dataBits},9,${s.stopBits},10,${s.parity},12,${s.txOnDelay},13,${s.txOffDelay},14,${s.termination},15,${s.flowControl}\n`;
+                });
+                config += '\n';
+            }
+
+            // Channels
+            if (configData.channels.length > 0) {
+                config += '// ****  Chan Config (9)  **** //\n';
+                config += '// name(1) enable(2) type(3) report(4) srcreg(5) scroll(6) pump(9) delta(7) deltadeb(8) //\n';
+                config += '// Analog...prec(20) units(21) //\n';
+                config += '// Digital...bitnum(30) zerolabel(31) onelabel(32) //\n';
+                configData.channels.forEach(c => {
+                    let line = `9,${c.index},1,${c.name},2,${c.enable},3,${c.type},4,${c.report},5,${c.sourceReg},6,${c.scrollList},7,${c.delta},8,${c.debounce},9,${c.pumpPage}`;
+                    if (c.type === 2) {
+                        line += `,20,${c.precision},21,${c.units || ''}`;
+                    } else if (c.type === 1) {
+                        line += `,30,${c.bitNumber},31,${c.zeroLabel},32,${c.oneLabel}`;
+                    }
+                    line += `,98,${1000 + c.index}\n`;
+                    config += line;
+                });
+                config += '\n';
+            }
+
+            // MODBUS Master
+            if (configData.modbus.length > 0) {
+                config += '//****  MODBUS Master Config (18)  ****//\n';
+                config += '// name(1) enable(2) link(3) slaveid(4) fcode(6) regaddr(7) regtype(8) //\n';
+                config += '// weight(9) offset(10) signed(11) prec(12) endian(13) bitnum(14) mask(15) //\n';
+                configData.modbus.forEach(m => {
+                    config += `18,${m.index},1,${m.name},2,${m.enable},3,${m.linkType},4,${m.slaveId},6,${m.functionCode},7,${m.registerAddress},8,${m.registerType},9,${m.bitWeight.toFixed(6)},10,${m.offset.toFixed(6)},11,${m.signed},12,${m.precision},13,${m.endian},14,${m.bitNumber},15,${m.packedMask},98,${600 + m.index}\n`;
+                });
+                config += '\n';
+            }
+
+            // ADC
+            if (configData.adc.length > 0) {
+                config += '// ****  ADC Config (11)  **** //\n';
+                config += '// name(1) inputtype(2) kfactor(3) zeroscale(4) fullscale(5) dispprec(6) //\n';
+                config += '// rawoff(11) zerocnt(12) fullcnt(13) zeroengr(14) fullengr(15) //\n';
+                configData.adc.forEach(a => {
+                    config += `11,${a.index},1,${a.name},2,${a.inputType},3,${a.dampingFactor.toFixed(3)},4,${a.zeroScale.toFixed(2)},5,${a.fullScale.toFixed(2)},6,${a.precision},11,${a.rawOffset},12,${a.zeroCount},13,${a.fullCount},14,${a.zeroRawUnits.toFixed(2)},15,${a.fullRawUnits.toFixed(2)},98,${100 + a.index}\n`;
+                });
+                config += '\n';
+            }
+
+            // Alarms
+            if (configData.alarms.length > 0) {
+                config += '//****  Alarm Config (34)  ****//\n';
+                config += '// name(1) enable(2) popup(3) type(4) srcchan(5) prec(6) almdly(7) roster(8) //\n';
+                config += '// digalmstate(14) anlglimtype(9) anlglim(10) anlghyst(11) anlglofs(12) anlghifs(13) //\n';
+                configData.alarms.forEach(a => {
+                    config += `34,${a.index},1,${a.name},2,${a.enable},3,${a.popup},4,${a.type},5,${a.sourceChan},6,${a.precision},7,${a.alarmDelay},8,${a.roster},9,${a.limitType},10,${a.limit.toFixed(1)},11,${a.hysteresis.toFixed(1)},12,${a.lowFailSafe.toFixed(1)},13,${a.highFailSafe.toFixed(1)},14,${a.digitalAlarmState},98,${3500 + a.index},98,${3600 + a.index},98,${3700 + a.index}\n`;
+                });
+                config += '\n';
+            }
+
+            // Pump Control
+            if (configData.pump) {
+                const p = configData.pump;
+                config += '// ****  Duplex Pump Control Config (39)  **** //\n';
+                config += '// enable(1) mode(2) numpumps(3) alt(4) manlead(5) hysteresis(6) senstype(7) //\n';
+                config += `39,1,${p.enable},2,${p.mode},3,${p.numPumps},4,${p.alternation},5,${p.manualLead},6,${p.hysteresis.toFixed(1)},7,${p.sensorType},8,${p.levelSensor},9,${p.pump1Run},10,${p.pump1Fault},12,${p.pump2Run},13,${p.pump2Fault},15,${p.phaseFault},16,${p.lowAlmFloat},17,${p.highAlmFloat},25,${p.leadOnSetpt.toFixed(1)},26,${p.lagOnSetpt.toFixed(1)},27,${p.allOffSetpt.toFixed(1)},28,${p.lowAlmSetpt.toFixed(1)},29,${p.highAlmSetpt.toFixed(1)},30,${p.debounce},31,${p.startDelay},32,${p.restartDelay},33,${p.dualStartDelay},34,${p.faultAlarmDelay},35,${p.pump1MaxRun},36,${p.pump2MaxRun}\n`;
+                config += '\n';
+            }
+
+            // Download the file
+            const blob = new Blob([config], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'aquavx_config.log';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showStatus('Configuration file downloaded!', 'success');
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            if (statusDiv) {
+                statusDiv.className = `status-message status-${type} show`;
+                statusDiv.textContent = message;
+                setTimeout(() => {
+                    statusDiv.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        function showHelp() {
+            alert('Aquavx Pro Configuration Editor - Table View\n\n' +
+                  '1. Load an existing .log config file\n' +
+                  '2. Or create a new configuration\n' +
+                  '3. Select a section from the dropdown\n' +
+                  '4. Edit values directly in the table\n' +
+                  '5. Add/delete rows as needed\n' +
+                  '6. Download the final configuration\n\n' +
+                  'Each row represents one configuration string in the output file.');
+        }
+    </script>
+</body>
+</html>
