@@ -315,6 +315,7 @@
                     <option value="modbus">MODBUS Master (18)</option>
                     <option value="adc">ADC Inputs (11)</option>
                     <option value="alarms">Alarms (34)</option>
+                    <option value="pumprun">Pump Run Stats (33)</option>
                     <option value="pump">Pump Control (39)</option>
                 </select>
             </div>
@@ -331,7 +332,11 @@
     <script>
         // Configuration data structure
         let configData = {
-            serial: [],
+            serial: [
+                {index: 1, name: "Modem Port", enable: 1, mode: 2, interface: 0, baud: 57600, maxIdle: 3, responseTimeout: 2, dataBits: 8, stopBits: 1, parity: 0, txOnDelay: 1, txOffDelay: 1, termination: 0, flowControl: 0},
+                {index: 2, name: "UserPort2", enable: 1, mode: 1, interface: 0, baud: 57600, maxIdle: 2, responseTimeout: 2, dataBits: 8, stopBits: 1, parity: 0, txOnDelay: 1, txOffDelay: 1, termination: 0, flowControl: 0},
+                {index: 3, name: "BLEPort", enable: 1, mode: 6, interface: 0, baud: 115200, maxIdle: 2, responseTimeout: 2, dataBits: 8, stopBits: 1, parity: 0, txOnDelay: 1, txOffDelay: 1, termination: 0, flowControl: 0}
+            ],
             channels: [
                 {index: 1, name: "Power", enable: 1, type: 2, report: 1, sourceReg: 106, scrollList: 1, delta: 0.5, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "v", zeroLabel: "", oneLabel: ""},
                 {index: 2, name: "Cell Fault", enable: 1, type: 1, report: 1, sourceReg: 1, scrollList: 1, delta: 0.0, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
@@ -385,9 +390,9 @@
                 {index: 50, name: "User Chan 50", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
                 {index: 51, name: "Analog Input 1", enable: 1, type: 2, report: 1, sourceReg: 101, scrollList: 4, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "units", zeroLabel: "", oneLabel: ""},
                 {index: 52, name: "Analog Input 2", enable: 1, type: 2, report: 1, sourceReg: 102, scrollList: 4, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "units", zeroLabel: "", oneLabel: ""},
-                {index: 53, name: "User Chan 53", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
-                {index: 54, name: "User Chan 54", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
-                {index: 55, name: "User Chan 55", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 53, name: "Analog Input 3", enable: 1, type: 2, report: 1, sourceReg: 103, scrollList: 4, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "units", zeroLabel: "", oneLabel: ""},
+                {index: 54, name: "Analog Input 4", enable: 1, type: 2, report: 1, sourceReg: 104, scrollList: 4, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "units", zeroLabel: "", oneLabel: ""},
+                {index: 55, name: "Analog Input 5", enable: 1, type: 2, report: 1, sourceReg: 105, scrollList: 4, delta: 1.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "units", zeroLabel: "", oneLabel: ""},
                 {index: 56, name: "AC-VoltA", enable: 1, type: 2, report: 1, sourceReg: 108, scrollList: 5, delta: 10.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "v", zeroLabel: "", oneLabel: ""},
                 {index: 57, name: "AC-VoltB", enable: 1, type: 2, report: 1, sourceReg: 109, scrollList: 5, delta: 10.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "v", zeroLabel: "", oneLabel: ""},
                 {index: 58, name: "AC-VoltC", enable: 1, type: 2, report: 1, sourceReg: 110, scrollList: 5, delta: 10.0, debounce: 5, pumpPage: 0, precision: 1, bitNumber: 0, units: "v", zeroLabel: "", oneLabel: ""},
@@ -405,9 +410,9 @@
                 {index: 70, name: "User Chan 70", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
                 {index: 71, name: "Digital Output 1", enable: 1, type: 1, report: 1, sourceReg: 301, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
                 {index: 72, name: "Digital Output 2", enable: 1, type: 1, report: 1, sourceReg: 302, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
-                {index: 73, name: "User Chan 73", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
-                {index: 74, name: "User Chan 74", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
-                {index: 75, name: "User Chan 75", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
+                {index: 73, name: "Digital Output 3", enable: 1, type: 1, report: 1, sourceReg: 303, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 74, name: "Digital Output 4", enable: 1, type: 1, report: 1, sourceReg: 304, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
+                {index: 75, name: "Digital Output 5", enable: 1, type: 1, report: 1, sourceReg: 305, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
                 {index: 76, name: "Digital Output 6", enable: 1, type: 1, report: 0, sourceReg: 306, scrollList: 6, delta: 0.5, debounce: 0, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "Off", oneLabel: "On"},
                 {index: 77, name: "User Chan 77", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
                 {index: 78, name: "User Chan 78", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
@@ -435,9 +440,15 @@
                 {index: 100, name: "User Chan 100", enable: 0, type: 0, report: 1, sourceReg: 0, scrollList: 0, delta: 0.5, debounce: 5, pumpPage: 0, precision: 0, bitNumber: 0, units: "", zeroLabel: "", oneLabel: ""},
             ],
             modbus: [],
-            modbus: [],
             adc: [],
             alarms: [],
+            pumpRun: [
+                {index: 1, name: "Pump1", enable: 1, sourceReg: 201, runState: 1, runDestChan: 11, startsDestChan: 12, durationDestChan: 13, cyclesDestChan: 14},
+                {index: 2, name: "Pump2", enable: 1, sourceReg: 203, runState: 1, runDestChan: 15, startsDestChan: 16, durationDestChan: 17, cyclesDestChan: 18},
+                {index: 3, name: "PumpRun3", enable: 0, sourceReg: 0, runState: 1, runDestChan: 0, startsDestChan: 0, durationDestChan: 0, cyclesDestChan: 0},
+                {index: 4, name: "PumpRun4", enable: 0, sourceReg: 0, runState: 1, runDestChan: 0, startsDestChan: 0, durationDestChan: 0, cyclesDestChan: 0},
+                {index: 5, name: "PumpRun5", enable: 0, sourceReg: 0, runState: 1, runDestChan: 0, startsDestChan: 0, durationDestChan: 0, cyclesDestChan: 0}
+            ],
             pump: null
         };
 
@@ -453,6 +464,170 @@
             stopBits: {1: '1', 2: '2'},
             parity: {0: 'None', 1: 'Odd', 2: 'Even'},
             channelType: {1: 'Digital', 2: 'Analog'},
+            sourceRegister: {
+                '0': '0 - None',
+                '101': '101 - AIN1',
+                '102': '102 - AIN2',
+                '103': '103 - AIN3',
+                '104': '104 - AIN4',
+                '105': '105 - AIN5',
+                '106': '106 - MainPower',
+                '107': '107 - PCBTemp',
+                '108': '108 - AC_VoltA',
+                '109': '109 - AC_VoltB',
+                '110': '110 - AC_VoltC',
+                '111': '111 - AC_CurrA',
+                '112': '112 - AC_CurrB',
+                '113': '113 - AC_CurrC',
+                '151': '151 - AnalogOutput1',
+                '152': '152 - AnalogOutput2',
+                '201': '201 - DigitalInput1',
+                '202': '202 - DigitalInput2',
+                '203': '203 - DigitalInput3',
+                '204': '204 - DigitalInput4',
+                '205': '205 - DigitalInput5',
+                '206': '206 - DigitalInput6',
+                '207': '207 - DigitalInput7',
+                '208': '208 - DigitalInput8',
+                '209': '209 - DigitalInput9',
+                '210': '210 - DigitalInput10',
+                '251': '251 - PulseIn1',
+                '252': '252 - PulseIn2',
+                '253': '253 - ACFreq',
+                '301': '301 - DigitalOutput1',
+                '302': '302 - DigitalOutput2',
+                '303': '303 - DigitalOutput3',
+                '304': '304 - DigitalOutput4',
+                '305': '305 - DigitalOutput5',
+                '401': '401 - TimedEvent1',
+                '402': '402 - TimedEvent2',
+                '403': '403 - TimedEvent3',
+                '404': '404 - TimedEvent4',
+                '601': '601 - MBMaster1',
+                '602': '602 - MBMaster2',
+                '603': '603 - MBMaster3',
+                '604': '604 - MBMaster4',
+                '605': '605 - MBMaster5',
+                '606': '606 - MBMaster6',
+                '607': '607 - MBMaster7',
+                '608': '608 - MBMaster8',
+                '609': '609 - MBMaster9',
+                '610': '610 - MBMaster10',
+                '611': '611 - MBMaster11',
+                '612': '612 - MBMaster12',
+                '613': '613 - MBMaster13',
+                '614': '614 - MBMaster14',
+                '615': '615 - MBMaster15',
+                '616': '616 - MBMaster16',
+                '617': '617 - MBMaster17',
+                '618': '618 - MBMaster18',
+                '619': '619 - MBMaster19',
+                '620': '620 - MBMaster20',
+                '621': '621 - MBMaster21',
+                '622': '622 - MBMaster22',
+                '623': '623 - MBMaster23',
+                '624': '624 - MBMaster24',
+                '625': '625 - MBMaster25',
+                '626': '626 - MBMaster26',
+                '627': '627 - MBMaster27',
+                '628': '628 - MBMaster28',
+                '629': '629 - MBMaster29',
+                '630': '630 - MBMaster30',
+                '631': '631 - MBMaster31',
+                '632': '632 - MBMaster32',
+                '1500': '1500 - Push1',
+                '1501': '1501 - Push2',
+                '1502': '1502 - Push3',
+                '1503': '1503 - Push4',
+                '1504': '1504 - Push5',
+                '1505': '1505 - Push6',
+                '1506': '1506 - Push7',
+                '1507': '1507 - Push8',
+                '1508': '1508 - Push9',
+                '1509': '1509 - Push10',
+                '1601': '1601 - MBSlave1',
+                '1602': '1602 - MBSlave2',
+                '1603': '1603 - MBSlave3',
+                '1604': '1604 - MBSlave4',
+                '1605': '1605 - MBSlave5',
+                '1606': '1606 - MBSlave6',
+                '1607': '1607 - MBSlave7',
+                '1608': '1608 - MBSlave8',
+                '1609': '1609 - MBSlave9',
+                '1610': '1610 - MBSlave10',
+                '1611': '1611 - MBSlave11',
+                '1612': '1612 - MBSlave12',
+                '1613': '1613 - MBSlave13',
+                '1614': '1614 - MBSlave14',
+                '1615': '1615 - MBSlave15',
+                '1616': '1616 - MBSlave16',
+                '1617': '1617 - MBSlave17',
+                '1618': '1618 - MBSlave18',
+                '1619': '1619 - MBSlave19',
+                '1620': '1620 - MBSlave20',
+                '1621': '1621 - MBSlave21',
+                '1622': '1622 - MBSlave22',
+                '1623': '1623 - MBSlave23',
+                '1624': '1624 - MBSlave24',
+                '1625': '1625 - MBSlave25',
+                '1626': '1626 - MBSlave26',
+                '1627': '1627 - MBSlave27',
+                '1628': '1628 - MBSlave28',
+                '1629': '1629 - MBSlave29',
+                '1630': '1630 - MBSlave30',
+                '1631': '1631 - MBSlave31',
+                '1632': '1632 - MBSlave32',
+                '2101': '2101 - MaxMin1',
+                '2102': '2102 - MaxMin2',
+                '2103': '2103 - MaxMin3',
+                '2104': '2104 - MaxMin4',
+                '2105': '2105 - MaxMin5',
+                '2601': '2601 - Totalizer1',
+                '2602': '2602 - Totalizer2',
+                '2603': '2603 - Totalizer3',
+                '2604': '2604 - Totalizer4',
+                '2605': '2605 - Totalizer5',
+                '3301': '3301 - PumpRun1',
+                '3302': '3302 - PumpRun2',
+                '3303': '3303 - PumpRun3',
+                '3304': '3304 - PumpRun4',
+                '3305': '3305 - PumpRun5',
+                '3701': '3701 - Alarm1',
+                '3702': '3702 - Alarm2',
+                '3703': '3703 - Alarm3',
+                '3704': '3704 - Alarm4',
+                '3705': '3705 - Alarm5',
+                '3706': '3706 - Alarm6',
+                '3707': '3707 - Alarm7',
+                '3708': '3708 - Alarm8',
+                '3709': '3709 - Alarm9',
+                '3710': '3710 - Alarm10',
+                '4101': '4101 - ROC1',
+                '4102': '4102 - ROC2',
+                '4103': '4103 - ROC3',
+                '4104': '4104 - ROC4',
+                '4105': '4105 - ROC5',
+                '4501': '4501 - DigiOutput1',
+                '4502': '4502 - DigiOutput2',
+                '4503': '4503 - DigiOutput3',
+                '4504': '4504 - DigiOutput4',
+                '4505': '4505 - DigiOutput5',
+                '4506': '4506 - DigiOutput6',
+                '4507': '4507 - DigiOutput7',
+                '4508': '4508 - DigiOutput8',
+                '4509': '4509 - DigiOutput9',
+                '4510': '4510 - DigiOutput10',
+                '4601': '4601 - AnlgOutput1',
+                '4602': '4602 - AnlgOutput2',
+                '4603': '4603 - AnlgOutput3',
+                '4604': '4604 - AnlgOutput4',
+                '4605': '4605 - AnlgOutput5',
+                '6001': '6001 - Average1',
+                '6002': '6002 - Average2',
+                '6003': '6003 - Average3',
+                '6004': '6004 - Average4',
+                '6005': '6005 - Average5'
+            },
             adcInputType: {0: 'None', 1: '0-20mA', 2: '4-20mA', 3: '0-5v', 4: '1-5v', 5: '+/-600ACV', 6: '+/-5AAC'},
             linkType: {0: 'RTU', 1: 'TCP'},
             functionCode: {
@@ -498,6 +673,7 @@
                 modbus: [],
                 adc: [],
                 alarms: [],
+                pumpRun: [],
                 pump: null
             };
 
@@ -520,6 +696,9 @@
                         break;
                     case '11':
                         parseADCEntry(parts);
+                        break;
+                    case '33':
+                        parsePumpRunEntry(parts);
                         break;
                     case '34':
                         parseAlarmEntry(parts);
@@ -622,6 +801,20 @@
             });
         }
 
+        function parsePumpRunEntry(parts) {
+            configData.pumpRun.push({
+                index: parseInt(parts[1]),
+                name: parts[3],
+                enable: parseInt(parts[5]),
+                sourceReg: parseInt(parts[7]),
+                runState: parseInt(parts[9]),
+                runDestChan: parseInt(parts[11]),
+                startsDestChan: parseInt(parts[13]),
+                durationDestChan: parseInt(parts[15]),
+                cyclesDestChan: parseInt(parts[17])
+            });
+        }
+
         function parseAlarmEntry(parts) {
             configData.alarms.push({
                 index: parseInt(parts[1]),
@@ -682,6 +875,7 @@
                     modbus: [],
                     adc: [],
                     alarms: [],
+                    pumpRun: [],
                     pump: {
                         enable: 0, mode: 1, numPumps: 2, alternation: 0, manualLead: 0,
                         hysteresis: 0.0, sensorType: 1, levelSensor: 0, pump1Run: 0,
@@ -724,6 +918,9 @@
                 case 'alarms':
                     content.innerHTML = renderAlarmsTable();
                     break;
+                case 'pumprun':
+                    content.innerHTML = renderPumpRunTable();
+                    break;
                 case 'pump':
                     content.innerHTML = renderPumpTable();
                     break;
@@ -755,14 +952,13 @@
                                 <th>Tx Off Delay</th>
                                 <th>Termination</th>
                                 <th>Flow Control</th>
-                                <th class="actions-col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             if (configData.serial.length === 0) {
-                html += '<tr><td colspan="16" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+                html += '<tr><td colspan="15" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
             } else {
                 configData.serial.forEach((entry, idx) => {
                     html += `
@@ -782,7 +978,6 @@
                             <td><input type="number" value="${entry.txOffDelay}" onchange="updateField('serial', ${idx}, 'txOffDelay', this.value)"></td>
                             <td>${createTableSelect('serial', idx, 'termination', entry.termination, dropdowns.enable)}</td>
                             <td>${createTableSelect('serial', idx, 'flowControl', entry.flowControl, dropdowns.enable)}</td>
-                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('serial', ${idx})">Delete</button></td>
                         </tr>
                     `;
                 });
@@ -817,16 +1012,18 @@
                                 <th>Units</th>
                                 <th>Zero Label</th>
                                 <th>One Label</th>
-                                <th class="actions-col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             if (configData.channels.length === 0) {
-                html += '<tr><td colspan="16" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+                html += '<tr><td colspan="15" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
             } else {
                 configData.channels.forEach((entry, idx) => {
+                    // Determine if Source Reg should be disabled (for first 8 channels)
+                    const isSourceRegLocked = entry.index <= 8;
+                    
                     html += `
                         <tr>
                             <td class="index-col">${entry.index}</td>
@@ -834,7 +1031,17 @@
                             <td>${createTableSelect('channels', idx, 'enable', entry.enable, dropdowns.enable)}</td>
                             <td>${createTableSelect('channels', idx, 'type', entry.type, dropdowns.channelType)}</td>
                             <td>${createTableSelect('channels', idx, 'report', entry.report, dropdowns.enable)}</td>
-                            <td><input type="number" value="${entry.sourceReg}" onchange="updateField('channels', ${idx}, 'sourceReg', this.value)"></td>
+                    `;
+                    
+                    // Special handling for Source Reg - locked for first 8 channels
+                    if (isSourceRegLocked) {
+                        const regLabel = dropdowns.sourceRegister[entry.sourceReg] || entry.sourceReg;
+                        html += `<td><select disabled style="opacity: 0.6; cursor: not-allowed;"><option>${regLabel}</option></select></td>`;
+                    } else {
+                        html += `<td>${createTableSelect('channels', idx, 'sourceReg', entry.sourceReg, dropdowns.sourceRegister)}</td>`;
+                    }
+                    
+                    html += `
                             <td>${createTableSelect('channels', idx, 'scrollList', entry.scrollList, dropdowns.enable)}</td>
                             <td><input type="number" step="0.1" value="${entry.delta}" onchange="updateField('channels', ${idx}, 'delta', this.value)"></td>
                             <td><input type="number" value="${entry.debounce}" onchange="updateField('channels', ${idx}, 'debounce', this.value)"></td>
@@ -844,7 +1051,6 @@
                             <td><input type="text" value="${entry.units || ''}" onchange="updateField('channels', ${idx}, 'units', this.value)"></td>
                             <td><input type="text" value="${entry.zeroLabel || ''}" onchange="updateField('channels', ${idx}, 'zeroLabel', this.value)"></td>
                             <td><input type="text" value="${entry.oneLabel || ''}" onchange="updateField('channels', ${idx}, 'oneLabel', this.value)"></td>
-                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('channels', ${idx})">Delete</button></td>
                         </tr>
                     `;
                 });
@@ -879,14 +1085,13 @@
                                 <th>Endian</th>
                                 <th>Bit #</th>
                                 <th>Mask</th>
-                                <th class="actions-col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             if (configData.modbus.length === 0) {
-                html += '<tr><td colspan="16" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+                html += '<tr><td colspan="15" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
             } else {
                 configData.modbus.forEach((entry, idx) => {
                     html += `
@@ -906,7 +1111,6 @@
                             <td>${createTableSelect('modbus', idx, 'endian', entry.endian, dropdowns.endian)}</td>
                             <td><input type="number" value="${entry.bitNumber}" onchange="updateField('modbus', ${idx}, 'bitNumber', this.value)"></td>
                             <td><input type="text" value="${entry.packedMask}" onchange="updateField('modbus', ${idx}, 'packedMask', this.value)"></td>
-                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('modbus', ${idx})">Delete</button></td>
                         </tr>
                     `;
                 });
@@ -938,14 +1142,13 @@
                                 <th>Full Count</th>
                                 <th>Zero Raw</th>
                                 <th>Full Raw</th>
-                                <th class="actions-col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             if (configData.adc.length === 0) {
-                html += '<tr><td colspan="13" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+                html += '<tr><td colspan="12" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
             } else {
                 configData.adc.forEach((entry, idx) => {
                     html += `
@@ -962,7 +1165,6 @@
                             <td><input type="number" step="0.01" value="${entry.fullCount}" onchange="updateField('adc', ${idx}, 'fullCount', this.value)"></td>
                             <td><input type="number" step="0.01" value="${entry.zeroRawUnits}" onchange="updateField('adc', ${idx}, 'zeroRawUnits', this.value)"></td>
                             <td><input type="number" step="0.01" value="${entry.fullRawUnits}" onchange="updateField('adc', ${idx}, 'fullRawUnits', this.value)"></td>
-                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('adc', ${idx})">Delete</button></td>
                         </tr>
                     `;
                 });
@@ -997,14 +1199,13 @@
                                 <th>Low FailSafe</th>
                                 <th>High FailSafe</th>
                                 <th>Digital State</th>
-                                <th class="actions-col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             if (configData.alarms.length === 0) {
-                html += '<tr><td colspan="16" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+                html += '<tr><td colspan="15" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
             } else {
                 configData.alarms.forEach((entry, idx) => {
                     html += `
@@ -1024,7 +1225,54 @@
                             <td><input type="number" step="0.1" value="${entry.lowFailSafe}" onchange="updateField('alarms', ${idx}, 'lowFailSafe', this.value)"></td>
                             <td><input type="number" step="0.1" value="${entry.highFailSafe}" onchange="updateField('alarms', ${idx}, 'highFailSafe', this.value)"></td>
                             <td><input type="number" value="${entry.digitalAlarmState}" onchange="updateField('alarms', ${idx}, 'digitalAlarmState', this.value)"></td>
-                            <td class="actions-col"><button class="btn btn-danger btn-small" onclick="deleteEntry('alarms', ${idx})">Delete</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderPumpRunTable() {
+            let html = `
+                <div class="section-header">
+                    <h2 class="section-title">Pump Run Statistics Configuration (${configData.pumpRun.length} entries)</h2>
+                    <button class="btn btn-primary" onclick="addPumpRunEntry()">+ Add Entry</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="index-col">#</th>
+                                <th>Name</th>
+                                <th>Enable</th>
+                                <th>Source Reg</th>
+                                <th>Run State</th>
+                                <th>Run Dest Chan</th>
+                                <th>Starts Dest Chan</th>
+                                <th>Duration Dest Chan</th>
+                                <th>Cycles Dest Chan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (configData.pumpRun.length === 0) {
+                html += '<tr><td colspan="9" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+            } else {
+                configData.pumpRun.forEach((entry, idx) => {
+                    html += `
+                        <tr>
+                            <td class="index-col">${entry.index}</td>
+                            <td><input type="text" value="${entry.name}" onchange="updateField('pumpRun', ${idx}, 'name', this.value)"></td>
+                            <td>${createTableSelect('pumpRun', idx, 'enable', entry.enable, dropdowns.enable)}</td>
+                            <td>${createTableSelect('pumpRun', idx, 'sourceReg', entry.sourceReg, dropdowns.sourceRegister)}</td>
+                            <td><input type="number" value="${entry.runState}" onchange="updateField('pumpRun', ${idx}, 'runState', this.value)"></td>
+                            <td><input type="number" value="${entry.runDestChan}" onchange="updateField('pumpRun', ${idx}, 'runDestChan', this.value)"></td>
+                            <td><input type="number" value="${entry.startsDestChan}" onchange="updateField('pumpRun', ${idx}, 'startsDestChan', this.value)"></td>
+                            <td><input type="number" value="${entry.durationDestChan}" onchange="updateField('pumpRun', ${idx}, 'durationDestChan', this.value)"></td>
+                            <td><input type="number" value="${entry.cyclesDestChan}" onchange="updateField('pumpRun', ${idx}, 'cyclesDestChan', this.value)"></td>
                         </tr>
                     `;
                 });
@@ -1215,6 +1463,17 @@
             showStatus('Alarm added', 'success');
         }
 
+        function addPumpRunEntry() {
+            const newIndex = configData.pumpRun.length + 1;
+            configData.pumpRun.push({
+                index: newIndex, name: `PumpRun${newIndex}`, enable: 0, 
+                sourceReg: 0, runState: 1, runDestChan: 0, 
+                startsDestChan: 0, durationDestChan: 0, cyclesDestChan: 0
+            });
+            showSection('pumprun');
+            showStatus('Pump Run entry added', 'success');
+        }
+
         function downloadConfig() {
             let config = '';
             
@@ -1277,6 +1536,16 @@
                 config += '// digalmstate(14) anlglimtype(9) anlglim(10) anlghyst(11) anlglofs(12) anlghifs(13) //\n';
                 configData.alarms.forEach(a => {
                     config += `34,${a.index},1,${a.name},2,${a.enable},3,${a.popup},4,${a.type},5,${a.sourceChan},6,${a.precision},7,${a.alarmDelay},8,${a.roster},9,${a.limitType},10,${a.limit.toFixed(1)},11,${a.hysteresis.toFixed(1)},12,${a.lowFailSafe.toFixed(1)},13,${a.highFailSafe.toFixed(1)},14,${a.digitalAlarmState},98,${3500 + a.index},98,${3600 + a.index},98,${3700 + a.index}\n`;
+                });
+                config += '\n';
+            }
+
+            // Pump Run Statistics
+            if (configData.pumpRun.length > 0) {
+                config += '//****  Pump Run Config (33)  ****//\n';
+                config += '// name(1) enable(2) srcreg(3) runstate(4) rundestchan(20) strtsdestchan(21) durdestchan(22) cyclesdestchan(23) //\n';
+                configData.pumpRun.forEach(pr => {
+                    config += `33,${pr.index},1,${pr.name},2,${pr.enable},3,${pr.sourceReg},4,${pr.runState},20,${pr.runDestChan},21,${pr.startsDestChan},22,${pr.durationDestChan},23,${pr.cyclesDestChan},98,${3000 + pr.index},98,${3100 + pr.index},98,${3200 + pr.index},98,${3300 + pr.index}\n`;
                 });
                 config += '\n';
             }
