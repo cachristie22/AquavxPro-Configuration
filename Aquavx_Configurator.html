@@ -315,6 +315,7 @@
                     <option value="modbus">MODBUS Master (18)</option>
                     <option value="adc">ADC Inputs (11)</option>
                     <option value="alarms">Alarms (34)</option>
+                    <option value="totalizer">Totalizers (32)</option>
                     <option value="pumprun">Pump Run Stats (33)</option>
                     <option value="pump">Pump Control (39)</option>
                 </select>
@@ -442,6 +443,13 @@
             modbus: [],
             adc: [],
             alarms: [],
+            totalizer: [
+                {index: 1, name: "Totalizer1", enable: 0, sourceReg: 0, precision: 1, flowConv: 1.0, minFlow: 0.0, rateDestChan: 0, totalDestChan: 0},
+                {index: 2, name: "Totalizer2", enable: 0, sourceReg: 0, precision: 1, flowConv: 1.0, minFlow: 0.0, rateDestChan: 0, totalDestChan: 0},
+                {index: 3, name: "Totalizer3", enable: 0, sourceReg: 0, precision: 1, flowConv: 1.0, minFlow: 0.0, rateDestChan: 0, totalDestChan: 0},
+                {index: 4, name: "Totalizer4", enable: 0, sourceReg: 0, precision: 1, flowConv: 1.0, minFlow: 0.0, rateDestChan: 0, totalDestChan: 0},
+                {index: 5, name: "Totalizer5", enable: 0, sourceReg: 0, precision: 1, flowConv: 1.0, minFlow: 0.0, rateDestChan: 0, totalDestChan: 0}
+            ],
             pumpRun: [
                 {index: 1, name: "Pump1", enable: 1, sourceReg: 201, runState: 1, runDestChan: 11, startsDestChan: 12, durationDestChan: 13, cyclesDestChan: 14},
                 {index: 2, name: "Pump2", enable: 1, sourceReg: 203, runState: 1, runDestChan: 15, startsDestChan: 16, durationDestChan: 17, cyclesDestChan: 18},
@@ -918,6 +926,9 @@
                 case 'alarms':
                     content.innerHTML = renderAlarmsTable();
                     break;
+                case 'totalizer':
+                    content.innerHTML = renderTotalizerTable();
+                    break;
                 case 'pumprun':
                     content.innerHTML = renderPumpRunTable();
                     break;
@@ -1234,6 +1245,54 @@
             return html;
         }
 
+        function renderTotalizerTable() {
+            let html = `
+                <div class="section-header">
+                    <h2 class="section-title">Totalizer Configuration (${configData.totalizer.length} entries)</h2>
+                    <button class="btn btn-primary" onclick="addTotalizerEntry()">+ Add Entry</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="index-col">#</th>
+                                <th>Name</th>
+                                <th>Enable</th>
+                                <th>Source Reg</th>
+                                <th>Precision</th>
+                                <th>Flow Conv</th>
+                                <th>Min Flow</th>
+                                <th>Rate Dest Chan</th>
+                                <th>Total Dest Chan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (configData.totalizer.length === 0) {
+                html += '<tr><td colspan="9" style="text-align:center; padding:40px;">No entries. Click "+ Add Entry" to create one.</td></tr>';
+            } else {
+                configData.totalizer.forEach((entry, idx) => {
+                    html += `
+                        <tr>
+                            <td class="index-col">${entry.index}</td>
+                            <td><input type="text" value="${entry.name}" onchange="updateField('totalizer', ${idx}, 'name', this.value)"></td>
+                            <td>${createTableSelect('totalizer', idx, 'enable', entry.enable, dropdowns.enable)}</td>
+                            <td>${createTableSelect('totalizer', idx, 'sourceReg', entry.sourceReg, dropdowns.sourceRegister)}</td>
+                            <td><input type="number" value="${entry.precision}" onchange="updateField('totalizer', ${idx}, 'precision', this.value)"></td>
+                            <td><input type="number" step="0.1" value="${entry.flowConv}" onchange="updateField('totalizer', ${idx}, 'flowConv', this.value)"></td>
+                            <td><input type="number" step="0.1" value="${entry.minFlow}" onchange="updateField('totalizer', ${idx}, 'minFlow', this.value)"></td>
+                            <td><input type="number" value="${entry.rateDestChan}" onchange="updateField('totalizer', ${idx}, 'rateDestChan', this.value)"></td>
+                            <td><input type="number" value="${entry.totalDestChan}" onchange="updateField('totalizer', ${idx}, 'totalDestChan', this.value)"></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
         function renderPumpRunTable() {
             let html = `
                 <div class="section-header">
@@ -1463,6 +1522,17 @@
             showStatus('Alarm added', 'success');
         }
 
+        function addTotalizerEntry() {
+            const newIndex = configData.totalizer.length + 1;
+            configData.totalizer.push({
+                index: newIndex, name: `Totalizer${newIndex}`, enable: 0,
+                sourceReg: 0, precision: 1, flowConv: 1.0, minFlow: 0.0,
+                rateDestChan: 0, totalDestChan: 0
+            });
+            showSection('totalizer');
+            showStatus('Totalizer entry added', 'success');
+        }
+
         function addPumpRunEntry() {
             const newIndex = configData.pumpRun.length + 1;
             configData.pumpRun.push({
@@ -1525,6 +1595,16 @@
                 config += '// rawoff(11) zerocnt(12) fullcnt(13) zeroengr(14) fullengr(15) //\n';
                 configData.adc.forEach(a => {
                     config += `11,${a.index},1,${a.name},2,${a.inputType},3,${a.dampingFactor.toFixed(3)},4,${a.zeroScale.toFixed(2)},5,${a.fullScale.toFixed(2)},6,${a.precision},11,${a.rawOffset},12,${a.zeroCount},13,${a.fullCount},14,${a.zeroRawUnits.toFixed(2)},15,${a.fullRawUnits.toFixed(2)},98,${100 + a.index}\n`;
+                });
+                config += '\n';
+            }
+
+            // Totalizers
+            if (configData.totalizer.length > 0) {
+                config += '//****  Totalizer Config (32)  ****//\n';
+                config += '// name(1) enable(2) srcreg(3) prec(4) flowconv(5) minflow(6) ratedestchan(20) totaldestchan(21) //\n';
+                configData.totalizer.forEach(t => {
+                    config += `32,${t.index},1,${t.name},2,${t.enable},3,${t.sourceReg},4,${t.precision},5,${t.flowConv.toFixed(1)},6,${t.minFlow.toFixed(1)},20,${t.rateDestChan},21,${t.totalDestChan},98,${2500 + t.index},98,${2600 + t.index}\n`;
                 });
                 config += '\n';
             }
