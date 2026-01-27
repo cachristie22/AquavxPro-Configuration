@@ -109,6 +109,14 @@
     .footer-left { display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.8125rem; }
     .footer-logo { height: 20px; opacity: 0.7; }
     .footer-right { color: var(--text-muted); font-size: 0.75rem; }
+    .chain-flow { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(0,0,0,0.15); border-radius: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .chain-step { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--bg-input); border-radius: 0.375rem; font-size: 0.8125rem; }
+    .chain-step.active { background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent); }
+    .chain-step.inactive { opacity: 0.5; }
+    .chain-arrow { color: var(--text-muted); font-size: 1rem; }
+    .chain-icon { font-size: 1rem; }
+    .dout-link-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
+    .dout-link-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: var(--success); border-radius: 0.5rem; font-size: 0.8125rem; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
@@ -133,7 +141,7 @@
       di:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DI${i+1}`,type:'status',lbl0:'Off',lbl1:'On',isPump:false,normalState:0})),
       ai:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`AI${i+1}`,inputType:2,preset:'custom',zero:0,full:100,units:'units',prec:1,damp:0.5,delta:1,debounce:5,totalizer:false,totConv:60,minFlow:0})),
       pumpCtrl:{on:false,mode:1,levelSrc:0,p1:0,p2:0,leadOn:10,lagOn:12,allOff:5,debounce:5,startDly:3},
-      alarms:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Alarm${i+1}`,srcCh:0,srcType:'',alarmType:0,delay:0,alarmState:1,limitType:0,limit:0,hysteresis:0})),
+      alarms:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Alarm${i+1}`,srcCh:0,srcType:'',alarmType:0,delay:0,alarmState:1,limitType:0,limit:0,hysteresis:0,popup:true,linkedDout:0,doutAction:'activate'})),
       push:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Push${i+1}`,mode:0,srcCh:0,delta:1,debounce:5,peerImei:''})),
       reporting:{rate:5,eodRate:1440},
       dout:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DO${i+1}`,srcReg:0,srcActiveState:1,outActiveSrc:1,outNotActiveSrc:0,duration:0}))
@@ -165,7 +173,7 @@
       };
       const reset = () => { if(confirm('Reset all?')) { setCfg(getDefault()); setStep(0); localStorage.removeItem(STORAGE_KEY); }};
 
-      const steps = [{id:'site',title:'Site Basics',icon:'🏢'},{id:'template',title:'Application',icon:'📋'},{id:'di',title:'Digital Inputs',icon:'🔘'},{id:'ai',title:'Analog Inputs',icon:'📈'},{id:'dout',title:'Digital Outputs',icon:'🔌'},{id:'pump',title:'Pump Control',icon:'⚡'},{id:'alarm',title:'Alarms',icon:'🚨'},{id:'push',title:'Peer-to-Peer',icon:'📡'},{id:'reporting',title:'Reporting',icon:'📶'},{id:'review',title:'Review',icon:'✅'}];
+      const steps = [{id:'site',title:'Site Basics',icon:'🏢'},{id:'template',title:'Application',icon:'📋'},{id:'di',title:'Digital Inputs',icon:'🔘'},{id:'ai',title:'Analog Inputs',icon:'📈'},{id:'pump',title:'Pump Control',icon:'⚡'},{id:'alarm',title:'Alarms & Outputs',icon:'🚨'},{id:'push',title:'Peer-to-Peer',icon:'📡'},{id:'reporting',title:'Reporting',icon:'📶'},{id:'review',title:'Review',icon:'✅'}];
 
       return (
         <div className="app">
@@ -188,12 +196,11 @@
               {step === 1 && <TemplateStep cfg={cfg} apply={applyTemplate} />}
               {step === 2 && <DIStep cfg={cfg} updateArr={updateArr} />}
               {step === 3 && <AIStep cfg={cfg} updateArr={updateArr} />}
-              {step === 4 && <DOutStep cfg={cfg} updateArr={updateArr} />}
-              {step === 5 && <PumpStep cfg={cfg} update={update} />}
-              {step === 6 && <AlarmStep cfg={cfg} updateArr={updateArr} />}
-              {step === 7 && <PushStep cfg={cfg} updateArr={updateArr} />}
-              {step === 8 && <ReportingStep cfg={cfg} update={update} />}
-              {step === 9 && <ReviewStep cfg={cfg} setOutput={setOutput} errors={errors} setErrors={setErrors} />}
+              {step === 4 && <PumpStep cfg={cfg} update={update} />}
+              {step === 5 && <AlarmStep cfg={cfg} updateArr={updateArr} />}
+              {step === 6 && <PushStep cfg={cfg} updateArr={updateArr} />}
+              {step === 7 && <ReportingStep cfg={cfg} update={update} />}
+              {step === 8 && <ReviewStep cfg={cfg} setOutput={setOutput} errors={errors} setErrors={setErrors} />}
               <div className="nav-buttons">
                 <button className="btn btn-secondary" onClick={() => setStep(s => Math.max(0, s-1))} disabled={step === 0}>← Previous</button>
                 <span className="step-indicator">Step {step + 1} of {steps.length}</span>
@@ -218,8 +225,8 @@
 
     function DIStep({ cfg, updateArr }) {
       const pumpCtrlEnabled = cfg.pumpCtrl.on;
-      const isLockedByPumpCtrl = (idx) => pumpCtrlEnabled && idx < 2; // DI1-DI2 locked when pump control enabled
-      const canBePump = (idx) => idx < 5 && !pumpCtrlEnabled; // Only DI1-DI5 can have pump tracking, but not when pump control enabled
+      const isLockedByPumpCtrl = (idx) => pumpCtrlEnabled && idx < 2;
+      const canBePump = (idx) => idx < 5 && !pumpCtrlEnabled;
       const getAvailableTypes = (idx) => {
         if (isLockedByPumpCtrl(idx)) return DI_TYPES.filter(t => t.id === 'pump_run');
         return canBePump(idx) ? DI_TYPES : DI_TYPES.filter(t => t.id !== 'pump_run');
@@ -228,41 +235,222 @@
     }
 
     function AIStep({ cfg, updateArr }) {
-      return (<div className="step-container"><div className="step-header"><h2>Analog Inputs</h2><p>Configure 5 analog inputs (Channels 51-55).</p></div><div className="input-grid">{cfg.ai.map((a, i) => (<div key={i} className={`input-card ${a.on ? 'enabled' : ''}`} style={{gridColumn: a.on ? 'span 2' : 'span 1'}}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={a.on} onChange={e => updateArr('ai', i, {on: e.target.checked})} /><span className="toggle-switch"></span><span>AI {i+1}</span></label><span className="channel-badge">CH {51+i}</span></div>{a.on && (<div className="input-card-body"><div className="form-row"><div className="form-group" style={{gridColumn:'span 2'}}><label>Name</label><input value={a.name} onChange={e => updateArr('ai', i, {name: e.target.value})} /></div><div className="form-group"><label>Preset</label><select value={a.preset} onChange={e => { const p = SENSOR_PRESETS[e.target.value]; updateArr('ai', i, {preset: e.target.value, inputType: p.inputType, zero: p.zeroScale, full: p.fullScale, units: p.units, prec: p.precision, totConv: p.totalizerConversion || 60}); }}>{Object.entries(SENSOR_PRESETS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></div></div>{a.preset === 'custom' && (<div className="form-row"><div className="form-group"><label>Input Type</label><select value={a.inputType} onChange={e => updateArr('ai', i, {inputType: +e.target.value})}>{INPUT_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div></div>)}<div className="form-row"><div className="form-group"><label>Zero Scale</label><input type="number" value={a.zero} onChange={e => updateArr('ai', i, {zero: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Full Scale</label><input type="number" value={a.full} onChange={e => updateArr('ai', i, {full: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Units</label><input value={a.units} onChange={e => updateArr('ai', i, {units: e.target.value})} maxLength={7} /></div><div className="form-group"><label>Precision</label><select value={a.prec} onChange={e => updateArr('ai', i, {prec: +e.target.value})}>{[0,1,2,3].map(p => <option key={p} value={p}>{p} dec</option>)}</select></div></div><div className="form-row"><div className="form-group"><label title="Minimum change in value required to trigger a report. The input must change by at least this amount from the last reported value before a new update is transmitted.">Delta ⓘ</label><input type="number" value={a.delta} onChange={e => updateArr('ai', i, {delta: +e.target.value})} step="0.1" min="0" /></div><div className="form-group"><label title="Stabilization period in seconds. After the value changes beyond the delta threshold, it must remain changed for at least this duration before the update is transmitted. Prevents reporting of transient fluctuations.">Debounce (sec) ⓘ</label><input type="number" value={a.debounce} onChange={e => updateArr('ai', i, {debounce: +e.target.value})} min="0" /></div></div>{SENSOR_PRESETS[a.preset]?.category === 'flow' && (<div style={{marginTop:'1rem',paddingTop:'1rem',borderTop:'1px solid var(--border-subtle)'}}><label className="toggle-label"><input type="checkbox" checked={a.totalizer} onChange={e => updateArr('ai', i, {totalizer: e.target.checked})} /><span className="toggle-switch"></span><span>Enable Totalizer</span></label>{a.totalizer && (<div className="form-row" style={{marginTop:'0.75rem'}}><div className="form-group"><label>Conversion</label><input type="number" value={a.totConv} onChange={e => updateArr('ai', i, {totConv: +e.target.value})} /><p className="form-help">GPM × factor</p></div><div className="form-group"><label>Min Flow</label><input type="number" value={a.minFlow} onChange={e => updateArr('ai', i, {minFlow: +e.target.value})} /></div></div>)}</div>)}</div>)}</div>))}</div></div>);
-    }
-
-    function DOutStep({ cfg, updateArr }) {
-      const OUTPUT_STATES = [{id:0,name:'De-activate'},{id:1,name:'Activate'},{id:2,name:'No Action'}];
-      const pumpCtrlEnabled = cfg.pumpCtrl.on;
-      const isLockedByPumpCtrl = (idx) => pumpCtrlEnabled && idx < 2; // DO1-DO2 locked when pump control enabled
-      // Build source options from alarms (In Alarm registers 3501-3510)
-      const alarmSrcOpts = cfg.alarms.filter(a => a.on).map(a => ({reg: 3500 + a.idx, name: `${a.name} (In Alarm)`}));
-      // Could add more source options here like pump control outputs, etc.
-      const srcOpts = [...alarmSrcOpts];
-      return (<div className="step-container"><div className="step-header"><h2>Digital (Relay) Outputs</h2><p>Configure 5 relay outputs (Channels 71-75). Control relays based on alarm states or other conditions.</p>{pumpCtrlEnabled && <div className="info-banner">ℹ️ DO1-DO2 are reserved for Pump Control (Pump 1 & 2 Call-to-Start relays).</div>}</div><div className="input-grid">{cfg.dout.map((d, i) => (<div key={i} className={`input-card ${d.on ? 'enabled' : ''} ${isLockedByPumpCtrl(i) ? 'locked' : ''}`} style={{gridColumn: d.on && !isLockedByPumpCtrl(i) ? 'span 2' : 'span 1'}}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={isLockedByPumpCtrl(i) ? true : d.on} onChange={e => updateArr('dout', i, {on: e.target.checked})} disabled={isLockedByPumpCtrl(i)} /><span className="toggle-switch"></span><span>DO {i+1}</span></label><span className="channel-badge">CH {71+i}</span></div>{(d.on || isLockedByPumpCtrl(i)) && (<div className="input-card-body">{isLockedByPumpCtrl(i) ? (<div className="locked-badge">🔒 Reserved for Pump Control - Pump {i+1} Call-to-Start</div>) : (<><div className="form-row"><div className="form-group" style={{gridColumn:'span 2'}}><label>Name</label><input value={d.name} onChange={e => updateArr('dout', i, {name: e.target.value})} maxLength={31} /></div></div><div className="form-row"><div className="form-group"><label title="The data register whose value determines the output state.">Source Register ⓘ</label><select value={d.srcReg} onChange={e => updateArr('dout', i, {srcReg: +e.target.value})}><option value={0}>-- Select --</option>{srcOpts.map(s => <option key={s.reg} value={s.reg}>Reg {s.reg}: {s.name}</option>)}</select></div><div className="form-group"><label title="The state of the source register that is considered 'active'.">Source Active State ⓘ</label><select value={d.srcActiveState} onChange={e => updateArr('dout', i, {srcActiveState: +e.target.value})}><option value={0}>0 (Off/False)</option><option value={1}>1 (On/True)</option></select></div></div><div className="form-row"><div className="form-group"><label title="Output behavior when the source is in its active state.">When Source Active ⓘ</label><select value={d.outActiveSrc} onChange={e => updateArr('dout', i, {outActiveSrc: +e.target.value})}>{OUTPUT_STATES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div className="form-group"><label title="Output behavior when the source is not in its active state.">When Source Not Active ⓘ</label><select value={d.outNotActiveSrc} onChange={e => updateArr('dout', i, {outNotActiveSrc: +e.target.value})}>{OUTPUT_STATES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div className="form-group"><label title="Maximum time in seconds to hold the active output state. Set to 0 for no time limit.">Max Duration (sec) ⓘ</label><input type="number" value={d.duration} onChange={e => updateArr('dout', i, {duration: +e.target.value})} min={0} /></div></div></>)}</div>)}</div>))}</div></div>);
+      return (<div className="step-container"><div className="step-header"><h2>Analog Inputs</h2><p>Configure 5 analog inputs (Channels 51-55).</p></div><div className="input-grid">{cfg.ai.map((a, i) => (<div key={i} className={`input-card ${a.on ? 'enabled' : ''}`} style={{gridColumn: a.on ? 'span 2' : 'span 1'}}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={a.on} onChange={e => updateArr('ai', i, {on: e.target.checked})} /><span className="toggle-switch"></span><span>AI {i+1}</span></label><span className="channel-badge">CH {51+i}</span></div>{a.on && (<div className="input-card-body"><div className="form-row"><div className="form-group" style={{gridColumn:'span 2'}}><label>Name</label><input value={a.name} onChange={e => updateArr('ai', i, {name: e.target.value})} /></div><div className="form-group"><label>Preset</label><select value={a.preset} onChange={e => { const p = SENSOR_PRESETS[e.target.value]; updateArr('ai', i, {preset: e.target.value, inputType: p.inputType, zero: p.zeroScale, full: p.fullScale, units: p.units, prec: p.precision, totConv: p.totalizerConversion || 60}); }}>{Object.entries(SENSOR_PRESETS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></div></div>{a.preset === 'custom' && (<div className="form-row"><div className="form-group"><label>Input Type</label><select value={a.inputType} onChange={e => updateArr('ai', i, {inputType: +e.target.value})}>{INPUT_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div></div>)}<div className="form-row"><div className="form-group"><label>Zero Scale</label><input type="number" value={a.zero} onChange={e => updateArr('ai', i, {zero: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Full Scale</label><input type="number" value={a.full} onChange={e => updateArr('ai', i, {full: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Units</label><input value={a.units} onChange={e => updateArr('ai', i, {units: e.target.value})} maxLength={7} /></div><div className="form-group"><label>Precision</label><select value={a.prec} onChange={e => updateArr('ai', i, {prec: +e.target.value})}>{[0,1,2,3].map(p => <option key={p} value={p}>{p} dec</option>)}</select></div></div><div className="form-row"><div className="form-group"><label title="Minimum change in value required to trigger a report.">Delta ⓘ</label><input type="number" value={a.delta} onChange={e => updateArr('ai', i, {delta: +e.target.value})} step="0.1" min="0" /></div><div className="form-group"><label title="Stabilization period in seconds.">Debounce (sec) ⓘ</label><input type="number" value={a.debounce} onChange={e => updateArr('ai', i, {debounce: +e.target.value})} min="0" /></div></div>{SENSOR_PRESETS[a.preset]?.category === 'flow' && (<div style={{marginTop:'1rem',paddingTop:'1rem',borderTop:'1px solid var(--border-subtle)'}}><label className="toggle-label"><input type="checkbox" checked={a.totalizer} onChange={e => updateArr('ai', i, {totalizer: e.target.checked})} /><span className="toggle-switch"></span><span>Enable Totalizer</span></label>{a.totalizer && (<div className="form-row" style={{marginTop:'0.75rem'}}><div className="form-group"><label>Conversion</label><input type="number" value={a.totConv} onChange={e => updateArr('ai', i, {totConv: +e.target.value})} /><p className="form-help">GPM × factor</p></div><div className="form-group"><label>Min Flow</label><input type="number" value={a.minFlow} onChange={e => updateArr('ai', i, {minFlow: +e.target.value})} /></div></div>)}</div>)}</div>)}</div>))}</div></div>);
     }
 
     function PumpStep({ cfg, update }) {
-      // Level source options are data registers, not channels
       const aiRegOpts = cfg.ai.filter(a => a.on).map(a => ({reg: 100 + a.idx, name: `Reg ${100+a.idx}: ${a.name} (AI${a.idx})`}));
       const p2pRegOpts = cfg.push.filter((p, i) => p.on && p.mode === 2 && i < 5).map((p, i) => {
         const pushIdx = cfg.push.indexOf(p);
         return {reg: 1500 + pushIdx, name: `Reg ${1500+pushIdx}: ${p.name} (P2P Receive)`};
       });
       const levelSrcOpts = [...aiRegOpts, ...p2pRegOpts];
-      return (<div className="step-container"><div className="step-header"><h2>Pump Control</h2><p>Configure duplex pump control.</p></div><div className="form-section"><label className="toggle-label" style={{fontSize:'1.125rem',fontWeight:500}}><input type="checkbox" checked={cfg.pumpCtrl.on} onChange={e => update('pumpCtrl', {on: e.target.checked})} /><span className="toggle-switch"></span><span>Enable Duplex Pump Control</span></label>{cfg.pumpCtrl.on && <div className="info-banner" style={{marginTop:'1rem'}}>ℹ️ DI1-DI2 will be reserved for Pump 1 & 2 Run inputs. DO1-DO2 will be reserved for Pump 1 & 2 Call-to-Start relays. Pump stats auto-configured on CH 11-18.</div>}</div>{cfg.pumpCtrl.on && (<><div className="form-section"><h3>Mode & Level Source</h3><div className="form-row"><div className="form-group"><label>Mode</label><select value={cfg.pumpCtrl.mode} onChange={e => update('pumpCtrl', {mode: +e.target.value})}><option value={0}>Drain (pumps ON when HIGH)</option><option value={1}>Fill (pumps ON when LOW)</option></select></div><div className="form-group"><label title="Select the data register containing the level sensor value. This can be an analog input register (101-105) or a P2P receive register (1500-1504).">Level Source Register ⓘ</label><select value={cfg.pumpCtrl.levelSrc} onChange={e => update('pumpCtrl', {levelSrc: +e.target.value})}><option value={0}>-- Select --</option>{levelSrcOpts.map(s => <option key={s.reg} value={s.reg}>{s.name}</option>)}</select></div></div><div className="form-row"><div className="form-group"><label>Pump 1 Run Input</label><input value="DI1 (CH 21) - Auto-configured" disabled style={{opacity:0.7}} /></div><div className="form-group"><label>Pump 2 Run Input</label><input value="DI2 (CH 22) - Auto-configured" disabled style={{opacity:0.7}} /></div></div></div><div className="form-section"><h3>Setpoints</h3><div className="form-row"><div className="form-group"><label>Lead On</label><input type="number" value={cfg.pumpCtrl.leadOn} onChange={e => update('pumpCtrl', {leadOn: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Lag On</label><input type="number" value={cfg.pumpCtrl.lagOn} onChange={e => update('pumpCtrl', {lagOn: +e.target.value})} step="0.1" /></div><div className="form-group"><label>All Off</label><input type="number" value={cfg.pumpCtrl.allOff} onChange={e => update('pumpCtrl', {allOff: +e.target.value})} step="0.1" /></div></div></div><div className="form-section"><h3>Timing</h3><div className="form-row"><div className="form-group"><label>Debounce (sec)</label><input type="number" value={cfg.pumpCtrl.debounce} onChange={e => update('pumpCtrl', {debounce: +e.target.value})} /></div><div className="form-group"><label>Start Delay (sec)</label><input type="number" value={cfg.pumpCtrl.startDly} onChange={e => update('pumpCtrl', {startDly: +e.target.value})} /></div></div></div></>)}</div>);
+      return (<div className="step-container"><div className="step-header"><h2>Pump Control</h2><p>Configure duplex pump control.</p></div><div className="form-section"><label className="toggle-label" style={{fontSize:'1.125rem',fontWeight:500}}><input type="checkbox" checked={cfg.pumpCtrl.on} onChange={e => update('pumpCtrl', {on: e.target.checked})} /><span className="toggle-switch"></span><span>Enable Duplex Pump Control</span></label>{cfg.pumpCtrl.on && <div className="info-banner" style={{marginTop:'1rem'}}>ℹ️ DI1-DI2 will be reserved for Pump 1 & 2 Run inputs. DO1-DO2 will be reserved for Pump 1 & 2 Call-to-Start relays. Pump stats auto-configured on CH 11-18.</div>}</div>{cfg.pumpCtrl.on && (<><div className="form-section"><h3>Mode & Level Source</h3><div className="form-row"><div className="form-group"><label>Mode</label><select value={cfg.pumpCtrl.mode} onChange={e => update('pumpCtrl', {mode: +e.target.value})}><option value={0}>Drain (pumps ON when HIGH)</option><option value={1}>Fill (pumps ON when LOW)</option></select></div><div className="form-group"><label title="Select the data register containing the level sensor value.">Level Source Register ⓘ</label><select value={cfg.pumpCtrl.levelSrc} onChange={e => update('pumpCtrl', {levelSrc: +e.target.value})}><option value={0}>-- Select --</option>{levelSrcOpts.map(s => <option key={s.reg} value={s.reg}>{s.name}</option>)}</select></div></div><div className="form-row"><div className="form-group"><label>Pump 1 Run Input</label><input value="DI1 (CH 21) - Auto-configured" disabled style={{opacity:0.7}} /></div><div className="form-group"><label>Pump 2 Run Input</label><input value="DI2 (CH 22) - Auto-configured" disabled style={{opacity:0.7}} /></div></div></div><div className="form-section"><h3>Setpoints</h3><div className="form-row"><div className="form-group"><label>Lead On</label><input type="number" value={cfg.pumpCtrl.leadOn} onChange={e => update('pumpCtrl', {leadOn: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Lag On</label><input type="number" value={cfg.pumpCtrl.lagOn} onChange={e => update('pumpCtrl', {lagOn: +e.target.value})} step="0.1" /></div><div className="form-group"><label>All Off</label><input type="number" value={cfg.pumpCtrl.allOff} onChange={e => update('pumpCtrl', {allOff: +e.target.value})} step="0.1" /></div></div></div><div className="form-section"><h3>Timing</h3><div className="form-row"><div className="form-group"><label>Debounce (sec)</label><input type="number" value={cfg.pumpCtrl.debounce} onChange={e => update('pumpCtrl', {debounce: +e.target.value})} /></div><div className="form-group"><label>Start Delay (sec)</label><input type="number" value={cfg.pumpCtrl.startDly} onChange={e => update('pumpCtrl', {startDly: +e.target.value})} /></div></div></div></>)}</div>);
     }
 
     function AlarmStep({ cfg, updateArr }) {
+      const pumpCtrlEnabled = cfg.pumpCtrl.on;
+      
+      // Build source channel options: DI, AI, and P2P Receive
       const diChOpts = cfg.di.filter(d => d.on).map(d => ({ch: 20+d.idx, name: d.name, type: 'digital'}));
-      const aiChOpts = cfg.ai.filter(a => a.on).map(a => ({ch: 50+a.idx, name: a.name, type: 'analog'}));
-      const chOpts = [...diChOpts, ...aiChOpts];
+      const aiChOpts = cfg.ai.filter(a => a.on).map(a => ({ch: 50+a.idx, name: a.name, type: 'analog', prec: a.prec}));
+      const p2pChOpts = cfg.push.filter((p, i) => p.on && p.mode === 2 && i < 5).map((p, i) => {
+        const pushIdx = cfg.push.indexOf(p);
+        return {ch: 95 + pushIdx, name: p.name, type: 'analog', prec: 1};
+      });
+      const chOpts = [...diChOpts, ...aiChOpts, ...p2pChOpts];
+      
       const getSourceType = (srcCh) => {
         if (srcCh >= 21 && srcCh <= 30) return 'digital';
         if (srcCh >= 51 && srcCh <= 55) return 'analog';
+        if (srcCh >= 95 && srcCh <= 99) return 'analog';
         return '';
       };
-      return (<div className="step-container"><div className="step-header"><h2>Alarms</h2><p>Configure up to 10 alarms based on digital or analog input conditions.</p></div>{cfg.alarms.map((a, i) => (<div key={i} className="form-section" style={{marginBottom:'1rem'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}><label className="toggle-label"><input type="checkbox" checked={a.on} onChange={e => updateArr('alarms', i, {on: e.target.checked})} /><span className="toggle-switch"></span><span>Alarm {i+1}</span></label><span className="channel-badge">Reg {3501+i}</span></div>{a.on && (<><div className="form-row"><div className="form-group"><label>Name</label><input value={a.name} onChange={e => updateArr('alarms', i, {name: e.target.value})} maxLength={31} /></div><div className="form-group"><label>Source Channel</label><select value={a.srcCh} onChange={e => { const ch = +e.target.value; updateArr('alarms', i, {srcCh: ch, srcType: getSourceType(ch)}); }}><option value={0}>-- Select --</option>{chOpts.map(c => <option key={c.ch} value={c.ch}>CH{c.ch}: {c.name} ({c.type})</option>)}</select></div><div className="form-group"><label title="Standard alarms clear automatically when the condition returns to normal. Latched alarms remain active until manually acknowledged.">Type ⓘ</label><select value={a.alarmType} onChange={e => updateArr('alarms', i, {alarmType: +e.target.value})}><option value={0}>Standard</option><option value={1}>Latched</option></select></div><div className="form-group"><label title="The source value must remain in the alarm condition for this duration before the alarm is triggered. Prevents transient conditions from causing alarms.">Delay (sec) ⓘ</label><input type="number" value={a.delay} onChange={e => updateArr('alarms', i, {delay: +e.target.value})} min={0} /></div></div>{a.srcType === 'digital' && (<div className="form-row"><div className="form-group"><label title="The state of the digital input that indicates an alarm condition.">Alarm State ⓘ</label><select value={a.alarmState} onChange={e => updateArr('alarms', i, {alarmState: +e.target.value})}><option value={0}>0 (Off/Open)</option><option value={1}>1 (On/Closed)</option></select></div></div>)}{a.srcType === 'analog' && (<div className="form-row"><div className="form-group"><label title="Low Limit: Alarm triggers when value falls below the limit. High Limit: Alarm triggers when value rises above the limit.">Limit Type ⓘ</label><select value={a.limitType} onChange={e => updateArr('alarms', i, {limitType: +e.target.value})}><option value={0}>Low Limit</option><option value={1}>High Limit</option></select></div><div className="form-group"><label>Limit Value</label><input type="number" value={a.limit} onChange={e => updateArr('alarms', i, {limit: +e.target.value})} step="0.1" /></div><div className="form-group"><label title="Deadband to prevent alarm chatter. For Low Limit: value must rise above (limit + hysteresis) to clear. For High Limit: value must fall below (limit - hysteresis) to clear.">Hysteresis ⓘ</label><input type="number" value={a.hysteresis} onChange={e => updateArr('alarms', i, {hysteresis: +e.target.value})} step="0.1" min={0} /></div></div>)}</>)}</div>))}</div>);
+      
+      const getSourceName = (srcCh) => {
+        const opt = chOpts.find(c => c.ch === srcCh);
+        return opt ? opt.name : `CH${srcCh}`;
+      };
+      
+      // Get available DOUTs (not locked by pump control and not already linked to another alarm)
+      const getAvailableDouts = (currentAlarmIdx) => {
+        const linkedDouts = cfg.alarms
+          .filter((a, i) => a.on && a.linkedDout > 0 && i !== currentAlarmIdx)
+          .map(a => a.linkedDout);
+        
+        const available = [];
+        for (let i = 1; i <= 5; i++) {
+          const isLockedByPumpCtrl = pumpCtrlEnabled && i <= 2;
+          const isLinkedToOther = linkedDouts.includes(i);
+          if (!isLockedByPumpCtrl && !isLinkedToOther) {
+            available.push(i);
+          }
+        }
+        return available;
+      };
+
+      return (
+        <div className="step-container">
+          <div className="step-header">
+            <h2>Alarms & Digital Outputs</h2>
+            <p>Configure alarms and optionally link them to relay outputs. The chain flows: Source Channel → Alarm → Digital Output (DO).</p>
+          </div>
+          
+          {pumpCtrlEnabled && (
+            <div className="info-banner" style={{marginBottom:'1.5rem'}}>
+              ℹ️ DO1-DO2 are reserved for Pump Control. Only DO3-DO5 are available for alarm linking.
+            </div>
+          )}
+          
+          {cfg.alarms.map((a, i) => (
+            <div key={i} className="form-section" style={{marginBottom:'1rem'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}>
+                <label className="toggle-label">
+                  <input type="checkbox" checked={a.on} onChange={e => updateArr('alarms', i, {on: e.target.checked})} />
+                  <span className="toggle-switch"></span>
+                  <span>Alarm {i+1}</span>
+                </label>
+                <span className="channel-badge">Reg {3501+i}</span>
+              </div>
+              
+              {a.on && (
+                <>
+                  {/* Chain Flow Visualization */}
+                  <div className="chain-flow">
+                    <div className={`chain-step ${a.srcCh > 0 ? 'active' : 'inactive'}`}>
+                      <span className="chain-icon">📊</span>
+                      <span>{a.srcCh > 0 ? getSourceName(a.srcCh) : 'Source'}</span>
+                    </div>
+                    <span className="chain-arrow">→</span>
+                    <div className="chain-step active">
+                      <span className="chain-icon">🚨</span>
+                      <span>{a.name}</span>
+                    </div>
+                    <span className="chain-arrow">→</span>
+                    <div className={`chain-step ${a.linkedDout > 0 ? 'active' : 'inactive'}`}>
+                      <span className="chain-icon">🔌</span>
+                      <span>{a.linkedDout > 0 ? `DO${a.linkedDout} (${a.doutAction})` : 'No Output'}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Basic Alarm Settings */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Name</label>
+                      <input value={a.name} onChange={e => updateArr('alarms', i, {name: e.target.value})} maxLength={31} />
+                    </div>
+                    <div className="form-group">
+                      <label>Source Channel</label>
+                      <select value={a.srcCh} onChange={e => { const ch = +e.target.value; updateArr('alarms', i, {srcCh: ch, srcType: getSourceType(ch)}); }}>
+                        <option value={0}>-- Select --</option>
+                        <optgroup label="Digital Inputs">
+                          {diChOpts.map(c => <option key={c.ch} value={c.ch}>CH{c.ch}: {c.name}</option>)}
+                        </optgroup>
+                        <optgroup label="Analog Inputs">
+                          {aiChOpts.map(c => <option key={c.ch} value={c.ch}>CH{c.ch}: {c.name}</option>)}
+                        </optgroup>
+                        {p2pChOpts.length > 0 && (
+                          <optgroup label="P2P Receive">
+                            {p2pChOpts.map(c => <option key={c.ch} value={c.ch}>CH{c.ch}: {c.name}</option>)}
+                          </optgroup>
+                        )}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label title="Standard alarms clear automatically. Latched alarms remain until acknowledged.">Type ⓘ</label>
+                      <select value={a.alarmType} onChange={e => updateArr('alarms', i, {alarmType: +e.target.value})}>
+                        <option value={0}>Standard</option>
+                        <option value={1}>Latched</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label title="Duration source must be in alarm condition before triggering.">Delay (sec) ⓘ</label>
+                      <input type="number" value={a.delay} onChange={e => updateArr('alarms', i, {delay: +e.target.value})} min={0} />
+                    </div>
+                    <div className="form-group">
+                      <label className="toggle-label" style={{marginTop:'1.5rem'}}>
+                        <input type="checkbox" checked={a.popup} onChange={e => updateArr('alarms', i, {popup: e.target.checked})} />
+                        <span className="toggle-switch"></span>
+                        <span title="Show alarm popup on device display">Display Popup ⓘ</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Digital Source Settings */}
+                  {a.srcType === 'digital' && (
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label title="The state of the digital input that triggers the alarm.">Alarm State ⓘ</label>
+                        <select value={a.alarmState} onChange={e => updateArr('alarms', i, {alarmState: +e.target.value})}>
+                          <option value={0}>0 (Off/Open)</option>
+                          <option value={1}>1 (On/Closed)</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Analog Source Settings */}
+                  {a.srcType === 'analog' && (
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label title="Low Limit: triggers when below. High Limit: triggers when above.">Limit Type ⓘ</label>
+                        <select value={a.limitType} onChange={e => updateArr('alarms', i, {limitType: +e.target.value})}>
+                          <option value={0}>Low Limit</option>
+                          <option value={1}>High Limit</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Limit Value</label>
+                        <input type="number" value={a.limit} onChange={e => updateArr('alarms', i, {limit: +e.target.value})} step="0.1" />
+                      </div>
+                      <div className="form-group">
+                        <label title="Deadband to prevent alarm chatter.">Hysteresis ⓘ</label>
+                        <input type="number" value={a.hysteresis} onChange={e => updateArr('alarms', i, {hysteresis: +e.target.value})} step="0.1" min={0} />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* DOUT Linking Section */}
+                  <div className="dout-link-section">
+                    <h3 style={{fontSize:'1rem',marginBottom:'0.75rem',paddingBottom:'0',borderBottom:'none'}}>🔌 Link to Digital Output</h3>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Output Relay</label>
+                        <select value={a.linkedDout} onChange={e => updateArr('alarms', i, {linkedDout: +e.target.value})}>
+                          <option value={0}>-- None --</option>
+                          {getAvailableDouts(i).map(doNum => (
+                            <option key={doNum} value={doNum}>DO{doNum} (CH {70+doNum})</option>
+                          ))}
+                          {a.linkedDout > 0 && !getAvailableDouts(i).includes(a.linkedDout) && (
+                            <option value={a.linkedDout}>DO{a.linkedDout} (CH {70+a.linkedDout}) - Current</option>
+                          )}
+                        </select>
+                      </div>
+                      {a.linkedDout > 0 && (
+                        <div className="form-group">
+                          <label>When In Alarm</label>
+                          <select value={a.doutAction} onChange={e => updateArr('alarms', i, {doutAction: e.target.value})}>
+                            <option value="activate">Activate Relay</option>
+                            <option value="deactivate">Deactivate Relay</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                    {a.linkedDout > 0 && (
+                      <div className="dout-link-badge">
+                        ✓ DO{a.linkedDout} will {a.doutAction} when "{a.name}" is in alarm
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      );
     }
 
     function PushStep({ cfg, updateArr }) {
@@ -275,9 +463,20 @@
     }
 
     function ReviewStep({ cfg, setOutput, errors, setErrors }) {
-      const validate = () => { const e = []; if (!cfg.site.name || cfg.site.name === 'Site Name') e.push('Site name required'); if (cfg.pumpCtrl.on && cfg.pumpCtrl.levelSrc === 0) e.push('Pump control: Level source required'); cfg.push.forEach((p, i) => { if (p.on && p.mode === 2 && !p.peerImei) e.push(`PUSH ${i+1}: Peer IMEI required`); }); setErrors(e); return e.length === 0; };
+      const validate = () => { 
+        const e = []; 
+        if (!cfg.site.name || cfg.site.name === 'Site Name') e.push('Site name required'); 
+        if (cfg.pumpCtrl.on && cfg.pumpCtrl.levelSrc === 0) e.push('Pump control: Level source required'); 
+        cfg.push.forEach((p, i) => { if (p.on && p.mode === 2 && !p.peerImei) e.push(`PUSH ${i+1}: Peer IMEI required`); }); 
+        cfg.alarms.forEach((a, i) => { if (a.on && a.srcCh === 0) e.push(`Alarm ${i+1}: Source channel required`); });
+        setErrors(e); 
+        return e.length === 0; 
+      };
       const generate = () => { if (!validate()) return; setOutput({ txt: generateConfigText(cfg), json: generateLosantJson(cfg), name: cfg.site.name }); };
-      return (<div className="step-container"><div className="step-header"><h2>Review & Generate</h2><p>Review your configuration.</p></div>{errors.length > 0 && (<div className="validation-errors"><h4>⚠️ Validation Errors</h4><ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul></div>)}<div className="summary-grid"><div className="summary-card"><h4>Site</h4><p>{cfg.site.name}</p><p>TZ: {TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}</p></div><div className="summary-card"><h4>Digital Inputs</h4><p>{cfg.di.filter(d => d.on).length} configured</p><ul>{cfg.di.filter(d => d.on).slice(0, 4).map(d => <li key={d.idx}>DI{d.idx}: {d.name}</li>)}</ul></div><div className="summary-card"><h4>Analog Inputs</h4><p>{cfg.ai.filter(a => a.on).length} configured</p><ul>{cfg.ai.filter(a => a.on).map(a => <li key={a.idx}>AI{a.idx}: {a.name}</li>)}</ul></div><div className="summary-card"><h4>Pump Control</h4><p>{cfg.pumpCtrl.on ? 'Enabled' : 'Disabled'}</p>{cfg.pumpCtrl.on && <p>Mode: {cfg.pumpCtrl.mode === 0 ? 'Drain' : 'Fill'}</p>}</div><div className="summary-card"><h4>Alarms</h4><p>{cfg.alarms.filter(a => a.on).length} configured</p></div><div className="summary-card"><h4>Peer-to-Peer</h4><p>{cfg.push.filter(p => p.on).length} configured</p></div><div className="summary-card"><h4>Reporting</h4><p>Rate: {cfg.reporting.rate} min</p><p>EOD: {cfg.reporting.eodRate} min</p></div></div><div className="generate-btn"><button className="btn btn-primary" style={{padding:'0.875rem 2rem',fontSize:'1rem'}} onClick={generate}>⚡ Generate Configuration</button></div></div>);
+      
+      const linkedDoutCount = cfg.alarms.filter(a => a.on && a.linkedDout > 0).length;
+      
+      return (<div className="step-container"><div className="step-header"><h2>Review & Generate</h2><p>Review your configuration.</p></div>{errors.length > 0 && (<div className="validation-errors"><h4>⚠️ Validation Errors</h4><ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul></div>)}<div className="summary-grid"><div className="summary-card"><h4>Site</h4><p>{cfg.site.name}</p><p>TZ: {TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}</p></div><div className="summary-card"><h4>Digital Inputs</h4><p>{cfg.di.filter(d => d.on).length} configured</p><ul>{cfg.di.filter(d => d.on).slice(0, 4).map(d => <li key={d.idx}>DI{d.idx}: {d.name}</li>)}</ul></div><div className="summary-card"><h4>Analog Inputs</h4><p>{cfg.ai.filter(a => a.on).length} configured</p><ul>{cfg.ai.filter(a => a.on).map(a => <li key={a.idx}>AI{a.idx}: {a.name}</li>)}</ul></div><div className="summary-card"><h4>Pump Control</h4><p>{cfg.pumpCtrl.on ? 'Enabled' : 'Disabled'}</p>{cfg.pumpCtrl.on && <p>Mode: {cfg.pumpCtrl.mode === 0 ? 'Drain' : 'Fill'}</p>}</div><div className="summary-card"><h4>Alarms</h4><p>{cfg.alarms.filter(a => a.on).length} configured</p><p>{linkedDoutCount} linked to outputs</p></div><div className="summary-card"><h4>Peer-to-Peer</h4><p>{cfg.push.filter(p => p.on).length} configured</p></div><div className="summary-card"><h4>Reporting</h4><p>Rate: {cfg.reporting.rate} min</p><p>EOD: {cfg.reporting.eodRate} min</p></div></div><div className="generate-btn"><button className="btn btn-primary" style={{padding:'0.875rem 2rem',fontSize:'1rem'}} onClick={generate}>⚡ Generate Configuration</button></div></div>);
     }
 
     function generateConfigText(cfg) {
@@ -286,9 +485,7 @@
       lines.push('2,1,0,3,0,17,0,28,1,29,1,30,0,31,0');
       lines.push(`7,1,0,2,${cfg.reporting.eodRate},3,${cfg.reporting.rate},8,124,9,38,20,30,21,0`);
       
-      // Build pump tracking info for channel generation
-      // Now supports up to 5 pumps (DI1-DI5), 2 channels each (CH 31-40)
-      const pumpChannels = []; // {diIdx, baseChannel, name}
+      const pumpChannels = [];
       cfg.di.forEach((d, i) => {
         if (d.on && d.isPump && i < 5) {
           pumpChannels.push({ diIdx: i, baseChannel: 31 + i * 2, name: d.name });
@@ -300,44 +497,67 @@
       cfg.di.forEach((d, i) => lines.push(`17,${i+1},1,${d.name},98,${201+i}`));
       let totIdx = 0; cfg.ai.forEach((a, i) => { if (a.on && a.totalizer && totIdx < 5) { lines.push(`32,${totIdx+1},1,${a.name},2,1,3,${101+i},4,${a.prec},5,${a.totConv.toFixed(1)},6,${a.minFlow.toFixed(1)},98,${2501+totIdx}`); totIdx++; }});
       
-      // Line 33 - Pump Stats - Only generate when pump control is DISABLED
-      // When pump control is enabled, firmware auto-configures CH 11-18 for pump stats
-      // Updated: 2 channels per pump (Daily Starts, Daily Runtime) - no Last Cycle
       if (!cfg.pumpCtrl.on) {
         let pumpIdx = 0; 
         cfg.di.forEach((d, i) => { 
           if (d.on && d.isPump && i < 5) { 
             const baseChannel = 31 + pumpIdx * 2;
             const pumpName = d.name.replace(' Run','');
-            // 21=DailyStarts channel, 22=DailyRuntime channel
             lines.push(`33,${pumpIdx+1},1,${pumpName},2,1,3,${201+i},4,1,21,${baseChannel},22,${baseChannel+1},98,${3001+pumpIdx},98,${3101+pumpIdx},98,${3201+pumpIdx}`); 
             pumpIdx++; 
           }
         });
       }
       
+      // Line 34 - Alarms
+      const getSourcePrec = (srcCh) => {
+        if (srcCh >= 51 && srcCh <= 55) {
+          const ai = cfg.ai[srcCh - 51];
+          return ai?.prec ?? 1;
+        }
+        return 1;
+      };
+      
       cfg.alarms.forEach((a, i) => {
+        const prec = a.srcType === 'analog' ? getSourcePrec(a.srcCh) : 1;
         if (a.srcType === 'analog') {
-          lines.push(`34,${i+1},1,${a.name},2,${a.on?1:0},3,1,4,${a.alarmType},5,${a.srcCh},7,${a.delay},9,${a.limitType},10,${a.limit},11,${a.hysteresis},98,${3501+i}`);
+          lines.push(`34,${i+1},1,${a.name},2,${a.on?1:0},3,${a.popup?1:0},4,${a.alarmType},5,${a.srcCh},6,${prec},7,${a.delay},8,0,9,${a.limitType},10,${a.limit.toFixed(1)},11,${a.hysteresis.toFixed(1)},12,-1.0,13,-1.0,14,1,98,${3501+i},98,${3601+i},98,${3701+i}`);
         } else {
-          lines.push(`34,${i+1},1,${a.name},2,${a.on?1:0},3,1,4,${a.alarmType},5,${a.srcCh},7,${a.delay},14,${a.alarmState},98,${3501+i}`);
+          lines.push(`34,${i+1},1,${a.name},2,${a.on?1:0},3,${a.popup?1:0},4,${a.alarmType},5,${a.srcCh},6,1,7,${a.delay},8,0,9,0,10,-1.0,11,0.0,12,-1.0,13,-1.0,14,${a.alarmState},98,${3501+i},98,${3601+i},98,${3701+i}`);
         }
       });
+      
       cfg.push.forEach((p, i) => lines.push(`28,${i+1},1,${p.name},2,${p.on?p.mode:0},3,${p.srcCh},5,${p.delta.toFixed(2)},6,${p.debounce},7,${p.peerImei},98,${1500+i}`));
+      
       if (cfg.pumpCtrl.on) {
-        // Level source is a data register directly (101-105 for AI, 1500-1504 for P2P)
         const levelSrcReg = cfg.pumpCtrl.levelSrc || 0;
-        // Fixed: DI1 (201) for Pump 1, DI2 (202) for Pump 2
         lines.push(`39,1,1,2,${cfg.pumpCtrl.mode},3,2,7,1,8,${levelSrcReg},9,201,12,202,25,${cfg.pumpCtrl.leadOn.toFixed(1)},26,${cfg.pumpCtrl.lagOn.toFixed(1)},27,${cfg.pumpCtrl.allOff.toFixed(1)},30,${cfg.pumpCtrl.debounce},31,${cfg.pumpCtrl.startDly},43,71,44,72`);
       }
       
       // Line 36 - Digital Outputs
+      const alarmLinkedDouts = {};
+      cfg.alarms.forEach((a, i) => {
+        if (a.on && a.linkedDout > 0) {
+          alarmLinkedDouts[a.linkedDout] = {
+            alarmIdx: i,
+            alarmName: a.name,
+            action: a.doutAction
+          };
+        }
+      });
+      
       cfg.dout.forEach((d, i) => {
+        const doNum = i + 1;
         if (cfg.pumpCtrl.on && i < 2) {
-          // DO1-DO2 auto-configured for pump control
-          lines.push(`36,${i+1},1,Pump${i+1} CallToStart,2,1,3,${5501+i},4,${301+i},5,1,6,0,7,1,8,0,98,${4501+i}`);
+          lines.push(`36,${doNum},1,Pump${doNum} CallToStart,2,1,3,${5501+i},4,${301+i},5,1,6,0,7,1,8,0,98,${4501+i}`);
+        } else if (alarmLinkedDouts[doNum]) {
+          const link = alarmLinkedDouts[doNum];
+          const srcReg = 3501 + link.alarmIdx;
+          const outActiveSrc = link.action === 'activate' ? 1 : 0;
+          const outNotActiveSrc = link.action === 'activate' ? 0 : 1;
+          lines.push(`36,${doNum},1,${link.alarmName},2,1,3,${srcReg},4,${301+i},5,1,6,${outNotActiveSrc},7,${outActiveSrc},8,0,98,${4501+i}`);
         } else {
-          lines.push(`36,${i+1},1,${d.name},2,${d.on?1:0},3,${d.srcReg},4,${301+i},5,${d.srcActiveState},6,${d.outNotActiveSrc},7,${d.outActiveSrc},8,${d.duration},98,${4501+i}`);
+          lines.push(`36,${doNum},1,${d.name},2,${d.on?1:0},3,${d.srcReg},4,${301+i},5,${d.srcActiveState},6,${d.outNotActiveSrc},7,${d.outActiveSrc},8,${d.duration},98,${4501+i}`);
         }
       });
       
@@ -347,12 +567,11 @@
     function genChanLine(ch, cfg, pumpChannels) {
       const pumpCtrlEnabled = cfg.pumpCtrl.on;
       
-      // Pump Control auto-configured channels 11-18 (pump stats when pump control enabled)
       if (ch >= 11 && ch <= 18 && pumpCtrlEnabled) {
         const pumpNum = ch <= 14 ? 1 : 2;
-        const statIdx = (ch - 11) % 4; // 0=Run, 1=Starts, 2=Runtime, 3=CycleTime
+        const statIdx = (ch - 11) % 4;
         const statNames = ['Run', 'Starts', 'Runtime', 'CycleTime'];
-        const statTypes = [1, 2, 2, 2]; // 1=digital, 2=analog
+        const statTypes = [1, 2, 2, 2];
         const statRegs = [3000 + pumpNum, 3100 + pumpNum, 3200 + pumpNum, 3300 + pumpNum];
         const statUnits = ['', '', 'secs', 'secs'];
         if (statTypes[statIdx] === 1) {
@@ -362,18 +581,14 @@
         }
       }
       
-      // CH 31-32 always reserved for HOA Position when pump control enabled
       if ((ch === 31 || ch === 32) && pumpCtrlEnabled) {
         const pumpNum = ch - 30;
         return `9,${ch},1,Pump${pumpNum} HOA Pos,2,1,3,2,4,1,5,${5800+pumpNum},6,0,20,0,21,,98,${1000+ch}`;
       }
       
-      // Pump stat channels 31-40 (when pump control DISABLED)
-      // 2 channels per pump: Daily Starts, Daily Runtime (no Last Cycle)
-      // Supports up to 5 pumps (DI1-DI5)
       if (ch >= 31 && ch <= 40 && !pumpCtrlEnabled) {
-        const pumpIdx = Math.floor((ch - 31) / 2); // 0-4 for pumps 1-5
-        const statType = (ch - 31) % 2; // 0=Daily Starts, 1=Daily Runtime
+        const pumpIdx = Math.floor((ch - 31) / 2);
+        const statType = (ch - 31) % 2;
         const pump = pumpChannels.find(p => p.diIdx === pumpIdx);
         if (pump) {
           const statNames = ['Daily Starts', 'Daily Runtime'];
@@ -385,18 +600,20 @@
         return `9,${ch},1,Chan ${ch},2,0,3,0,4,1,5,0,6,0,98,${1000+ch}`;
       }
       
-      // Digital output channels 71-75
       if (ch >= 71 && ch <= 75) {
         const idx = ch - 71;
+        const doNum = idx + 1;
+        const linkedAlarm = cfg.alarms.find(a => a.on && a.linkedDout === doNum);
+        
         if (pumpCtrlEnabled && idx < 2) {
-          // DO1-DO2 auto-configured for pump control
           return `9,${ch},1,Pump${idx+1} CallToStart,2,1,3,1,4,1,5,${5501+idx},6,6,30,0,31,Off,32,On,98,${1000+ch}`;
+        } else if (linkedAlarm) {
+          return `9,${ch},1,${linkedAlarm.name},2,1,3,1,4,1,5,${301+idx},6,6,30,0,31,Off,32,On,98,${1000+ch}`;
         }
         const d = cfg.dout[idx];
         return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${301+idx},6,6,30,0,31,Off,32,On,98,${1000+ch}`;
       }
       
-      // Peer-to-peer receive channels 95-99
       if (ch >= 95 && ch <= 99) {
         const pushIdx = ch - 95;
         const push = cfg.push[pushIdx];
@@ -416,10 +633,8 @@
       cfg.ai.filter(a => a.on).forEach(a => { attrs.push({name:`ch${50+a.idx}`,dataType:'number',description:a.name}); tags.push({key:`ch${50+a.idx}_name`,value:a.name},{key:`ch${50+a.idx}_units`,value:a.units}); });
       
       if (cfg.pumpCtrl.on) {
-        // Pump Control enabled - CH 11-18 for pump stats, CH 31-32 for HOA
         for (let p = 1; p <= 2; p++) {
           const baseChannel = 11 + (p - 1) * 4;
-          // Run, Starts, Runtime, CycleTime
           attrs.push({name:`ch${baseChannel}`,dataType:'boolean',description:`Pump${p} Run`});
           tags.push({key:`ch${baseChannel}_name`,value:`Pump${p} Run`});
           attrs.push({name:`ch${baseChannel+1}`,dataType:'number',description:`Pump${p} Starts`});
@@ -428,33 +643,34 @@
           tags.push({key:`ch${baseChannel+2}_name`,value:`Pump${p} Runtime`},{key:`ch${baseChannel+2}_units`,value:'sec'});
           attrs.push({name:`ch${baseChannel+3}`,dataType:'number',description:`Pump${p} CycleTime`});
           tags.push({key:`ch${baseChannel+3}_name`,value:`Pump${p} CycleTime`},{key:`ch${baseChannel+3}_units`,value:'sec'});
-          // HOA Position (CH 31-32)
           attrs.push({name:`ch${30+p}`,dataType:'number',description:`Pump${p} HOA Pos`});
           tags.push({key:`ch${30+p}_name`,value:`Pump${p} HOA Pos`});
         }
-        // DO1-DO2 for pump start
         for (let p = 1; p <= 2; p++) {
           attrs.push({name:`ch${70+p}`,dataType:'boolean',description:`Pump${p} CallToStart`});
           tags.push({key:`ch${70+p}_name`,value:`Pump${p} CallToStart`});
         }
       } else {
-        // Pump Control disabled - CH 31-40 for manual pump run tracking
-        // 2 channels per pump: Daily Starts, Daily Runtime (no Last Cycle)
         cfg.di.forEach((d, i) => {
           if (d.on && d.isPump && i < 5) {
             const baseChannel = 31 + i * 2;
             const pumpName = d.name.replace(' Run', '');
-            // Daily Starts
             attrs.push({name:`ch${baseChannel}`,dataType:'number',description:`${pumpName} Daily Starts`});
             tags.push({key:`ch${baseChannel}_name`,value:`${pumpName} Daily Starts`},{key:`ch${baseChannel}_units`,value:'cnt'});
-            // Daily Runtime
             attrs.push({name:`ch${baseChannel+1}`,dataType:'number',description:`${pumpName} Daily Runtime`});
             tags.push({key:`ch${baseChannel+1}_name`,value:`${pumpName} Daily Runtime`},{key:`ch${baseChannel+1}_units`,value:'sec'});
           }
         });
       }
       
-      // P2P receive channels (CH 95-99)
+      cfg.alarms.forEach((a, i) => {
+        if (a.on && a.linkedDout > 0) {
+          const ch = 70 + a.linkedDout;
+          attrs.push({name:`ch${ch}`,dataType:'boolean',description:a.name});
+          tags.push({key:`ch${ch}_name`,value:a.name});
+        }
+      });
+      
       cfg.push.forEach((p, i) => {
         if (p.on && p.mode === 2 && i < 5) {
           const ch = 95 + i;
