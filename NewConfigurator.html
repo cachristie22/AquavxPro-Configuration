@@ -219,12 +219,12 @@
     function DIStep({ cfg, updateArr }) {
       const pumpCtrlEnabled = cfg.pumpCtrl.on;
       const isLockedByPumpCtrl = (idx) => pumpCtrlEnabled && idx < 2; // DI1-DI2 locked when pump control enabled
-      const canBePump = (idx) => idx < 4 && !pumpCtrlEnabled; // Only DI1-DI4 can have pump tracking, but not when pump control enabled
+      const canBePump = (idx) => idx < 5 && !pumpCtrlEnabled; // Only DI1-DI5 can have pump tracking, but not when pump control enabled
       const getAvailableTypes = (idx) => {
         if (isLockedByPumpCtrl(idx)) return DI_TYPES.filter(t => t.id === 'pump_run');
         return canBePump(idx) ? DI_TYPES : DI_TYPES.filter(t => t.id !== 'pump_run');
       };
-      return (<div className="step-container"><div className="step-header"><h2>Digital Inputs</h2><p>Configure 10 digital inputs (Channels 21-30).</p>{pumpCtrlEnabled && <div className="info-banner">ℹ️ DI1-DI2 are reserved for Pump Control (Pump 1 & 2 Run inputs). Pump stats auto-configured on CH 11-18.</div>}</div><div className="input-grid">{cfg.di.map((d, i) => (<div key={i} className={`input-card ${d.on ? 'enabled' : ''} ${isLockedByPumpCtrl(i) ? 'locked' : ''}`}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={d.on} onChange={e => updateArr('di', i, {on: e.target.checked})} disabled={isLockedByPumpCtrl(i)} /><span className="toggle-switch"></span><span>DI {i+1}</span></label><span className="channel-badge">CH {21+i}</span></div>{d.on && (<div className="input-card-body">{isLockedByPumpCtrl(i) && <div className="locked-badge">🔒 Reserved for Pump Control</div>}<div className="form-group"><label>Name</label><input value={d.name} onChange={e => updateArr('di', i, {name: e.target.value})} disabled={isLockedByPumpCtrl(i)} /></div><div className="form-row"><div className="form-group"><label>Type</label><select value={d.type} onChange={e => { const t = DI_TYPES.find(x => x.id === e.target.value); updateArr('di', i, {type: e.target.value, lbl0: t?.labels[0], lbl1: t?.labels[1], isPump: e.target.value === 'pump_run'}); }} disabled={isLockedByPumpCtrl(i)}>{getAvailableTypes(i).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div><div className="form-group"><label>Normal State</label><select value={d.normalState} onChange={e => updateArr('di', i, {normalState: +e.target.value})} disabled={isLockedByPumpCtrl(i)}><option value={0}>Normally Open</option><option value={1}>Normally Closed</option></select></div></div>{!isLockedByPumpCtrl(i) && (<div className="form-row"><div className="form-group"><label>Off Label (0)</label><input value={d.lbl0} onChange={e => updateArr('di', i, {lbl0: e.target.value})} /></div><div className="form-group"><label>On Label (1)</label><input value={d.lbl1} onChange={e => updateArr('di', i, {lbl1: e.target.value})} /></div></div>)}{d.isPump && !pumpCtrlEnabled && <div className="pump-badge">🔄 Pump Run Tracking Enabled (CH {31 + i*3}-{33 + i*3})</div>}</div>)}</div>))}</div></div>);
+      return (<div className="step-container"><div className="step-header"><h2>Digital Inputs</h2><p>Configure 10 digital inputs (Channels 21-30).</p>{pumpCtrlEnabled && <div className="info-banner">ℹ️ DI1-DI2 are reserved for Pump Control (Pump 1 & 2 Run inputs). Pump stats auto-configured on CH 11-18.</div>}</div><div className="input-grid">{cfg.di.map((d, i) => (<div key={i} className={`input-card ${d.on ? 'enabled' : ''} ${isLockedByPumpCtrl(i) ? 'locked' : ''}`}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={d.on} onChange={e => updateArr('di', i, {on: e.target.checked})} disabled={isLockedByPumpCtrl(i)} /><span className="toggle-switch"></span><span>DI {i+1}</span></label><span className="channel-badge">CH {21+i}</span></div>{d.on && (<div className="input-card-body">{isLockedByPumpCtrl(i) && <div className="locked-badge">🔒 Reserved for Pump Control</div>}<div className="form-group"><label>Name</label><input value={d.name} onChange={e => updateArr('di', i, {name: e.target.value})} disabled={isLockedByPumpCtrl(i)} /></div><div className="form-row"><div className="form-group"><label>Type</label><select value={d.type} onChange={e => { const t = DI_TYPES.find(x => x.id === e.target.value); updateArr('di', i, {type: e.target.value, lbl0: t?.labels[0], lbl1: t?.labels[1], isPump: e.target.value === 'pump_run'}); }} disabled={isLockedByPumpCtrl(i)}>{getAvailableTypes(i).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div><div className="form-group"><label>Normal State</label><select value={d.normalState} onChange={e => updateArr('di', i, {normalState: +e.target.value})} disabled={isLockedByPumpCtrl(i)}><option value={0}>Normally Open</option><option value={1}>Normally Closed</option></select></div></div>{!isLockedByPumpCtrl(i) && (<div className="form-row"><div className="form-group"><label>Off Label (0)</label><input value={d.lbl0} onChange={e => updateArr('di', i, {lbl0: e.target.value})} /></div><div className="form-group"><label>On Label (1)</label><input value={d.lbl1} onChange={e => updateArr('di', i, {lbl1: e.target.value})} /></div></div>)}{d.isPump && !pumpCtrlEnabled && <div className="pump-badge">🔄 Pump Run Tracking Enabled (CH {31 + i*2}, {32 + i*2})</div>}</div>)}</div>))}</div></div>);
     }
 
     function AIStep({ cfg, updateArr }) {
@@ -287,10 +287,11 @@
       lines.push(`7,1,0,2,${cfg.reporting.eodRate},3,${cfg.reporting.rate},8,124,9,38,20,30,21,0`);
       
       // Build pump tracking info for channel generation
+      // Now supports up to 5 pumps (DI1-DI5), 2 channels each (CH 31-40)
       const pumpChannels = []; // {diIdx, baseChannel, name}
       cfg.di.forEach((d, i) => {
-        if (d.on && d.isPump && i < 4) {
-          pumpChannels.push({ diIdx: i, baseChannel: 31 + i * 3, name: d.name });
+        if (d.on && d.isPump && i < 5) {
+          pumpChannels.push({ diIdx: i, baseChannel: 31 + i * 2, name: d.name });
         }
       });
       
@@ -301,14 +302,15 @@
       
       // Line 33 - Pump Stats - Only generate when pump control is DISABLED
       // When pump control is enabled, firmware auto-configures CH 11-18 for pump stats
+      // Updated: 2 channels per pump (Daily Starts, Daily Runtime) - no Last Cycle
       if (!cfg.pumpCtrl.on) {
         let pumpIdx = 0; 
         cfg.di.forEach((d, i) => { 
-          if (d.on && d.isPump && i < 4) { 
-            const baseChannel = 31 + pumpIdx * 3;
+          if (d.on && d.isPump && i < 5) { 
+            const baseChannel = 31 + pumpIdx * 2;
             const pumpName = d.name.replace(' Run','');
-            // 20=PumpRunDestChan, 21=DailyStarts, 22=DailyRuntime, 23=LastCycle
-            lines.push(`33,${pumpIdx+1},1,${pumpName},2,1,3,${201+i},4,1,20,${baseChannel},21,${baseChannel+1},22,${baseChannel+2},23,${baseChannel},98,${3001+pumpIdx},98,${3101+pumpIdx},98,${3201+pumpIdx},98,${3301+pumpIdx}`); 
+            // 21=DailyStarts channel, 22=DailyRuntime channel
+            lines.push(`33,${pumpIdx+1},1,${pumpName},2,1,3,${201+i},4,1,21,${baseChannel},22,${baseChannel+1},98,${3001+pumpIdx},98,${3101+pumpIdx},98,${3201+pumpIdx}`); 
             pumpIdx++; 
           }
         });
@@ -366,16 +368,17 @@
         return `9,${ch},1,Pump${pumpNum} HOA Pos,2,1,3,2,4,1,5,${5800+pumpNum},6,0,20,0,21,,98,${1000+ch}`;
       }
       
-      // Pump stat channels 33-42 (when pump control DISABLED)
-      // CH 31-32 for pump stats only when pump control disabled
-      if (ch >= 31 && ch <= 42 && !pumpCtrlEnabled) {
-        const pumpIdx = Math.floor((ch - 31) / 3);
-        const statType = (ch - 31) % 3; // 0=Daily Starts, 1=Daily Runtime, 2=Last Cycle
+      // Pump stat channels 31-40 (when pump control DISABLED)
+      // 2 channels per pump: Daily Starts, Daily Runtime (no Last Cycle)
+      // Supports up to 5 pumps (DI1-DI5)
+      if (ch >= 31 && ch <= 40 && !pumpCtrlEnabled) {
+        const pumpIdx = Math.floor((ch - 31) / 2); // 0-4 for pumps 1-5
+        const statType = (ch - 31) % 2; // 0=Daily Starts, 1=Daily Runtime
         const pump = pumpChannels.find(p => p.diIdx === pumpIdx);
         if (pump) {
-          const statNames = ['Daily Starts', 'Daily Runtime', 'Last Cycle'];
-          const statUnits = ['cnt', 'sec', 'sec'];
-          const statRegs = [3101 + pumpIdx, 3201 + pumpIdx, 3301 + pumpIdx];
+          const statNames = ['Daily Starts', 'Daily Runtime'];
+          const statUnits = ['cnt', 'sec'];
+          const statRegs = [3101 + pumpIdx, 3201 + pumpIdx];
           const pumpName = pump.name.replace(' Run', '');
           return `9,${ch},1,${pumpName} ${statNames[statType]},2,1,3,2,4,1,5,${statRegs[statType]},6,4,20,0,21,${statUnits[statType]},98,${1000+ch}`;
         }
@@ -435,10 +438,11 @@
           tags.push({key:`ch${70+p}_name`,value:`Pump${p} CallToStart`});
         }
       } else {
-        // Pump Control disabled - CH 31-42 for manual pump run tracking
+        // Pump Control disabled - CH 31-40 for manual pump run tracking
+        // 2 channels per pump: Daily Starts, Daily Runtime (no Last Cycle)
         cfg.di.forEach((d, i) => {
-          if (d.on && d.isPump && i < 4) {
-            const baseChannel = 31 + i * 3;
+          if (d.on && d.isPump && i < 5) {
+            const baseChannel = 31 + i * 2;
             const pumpName = d.name.replace(' Run', '');
             // Daily Starts
             attrs.push({name:`ch${baseChannel}`,dataType:'number',description:`${pumpName} Daily Starts`});
@@ -446,9 +450,6 @@
             // Daily Runtime
             attrs.push({name:`ch${baseChannel+1}`,dataType:'number',description:`${pumpName} Daily Runtime`});
             tags.push({key:`ch${baseChannel+1}_name`,value:`${pumpName} Daily Runtime`},{key:`ch${baseChannel+1}_units`,value:'sec'});
-            // Last Cycle
-            attrs.push({name:`ch${baseChannel+2}`,dataType:'number',description:`${pumpName} Last Cycle`});
-            tags.push({key:`ch${baseChannel+2}_name`,value:`${pumpName} Last Cycle`},{key:`ch${baseChannel+2}_units`,value:'sec'});
           }
         });
       }
