@@ -371,11 +371,14 @@
                       <input type="number" value={a.delay} onChange={e => updateArr('alarms', i, {delay: +e.target.value})} min={0} />
                     </div>
                     <div className="form-group">
-                      <label className="toggle-label" style={{marginTop:'1.5rem'}}>
-                        <input type="checkbox" checked={a.popup} onChange={e => updateArr('alarms', i, {popup: e.target.checked})} />
-                        <span className="toggle-switch"></span>
-                        <span title="Show alarm popup on device display">Display Popup ⓘ</span>
-                      </label>
+                      <label title="Show alarm popup on device display">Display Popup ⓘ</label>
+                      <div style={{paddingTop:'0.25rem'}}>
+                        <label className="toggle-label">
+                          <input type="checkbox" checked={a.popup} onChange={e => updateArr('alarms', i, {popup: e.target.checked})} />
+                          <span className="toggle-switch"></span>
+                          <span>{a.popup ? 'Enabled' : 'Disabled'}</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
                   
@@ -404,11 +407,11 @@
                       </div>
                       <div className="form-group">
                         <label>Limit Value</label>
-                        <input type="number" value={a.limit} onChange={e => updateArr('alarms', i, {limit: +e.target.value})} step="0.1" />
+                        <input type="number" value={a.limit} onChange={e => updateArr('alarms', i, {limit: +e.target.value})} step="any" />
                       </div>
                       <div className="form-group">
                         <label title="Deadband to prevent alarm chatter.">Hysteresis ⓘ</label>
-                        <input type="number" value={a.hysteresis} onChange={e => updateArr('alarms', i, {hysteresis: +e.target.value})} step="0.1" min={0} />
+                        <input type="number" value={a.hysteresis} onChange={e => updateArr('alarms', i, {hysteresis: +e.target.value})} step="any" min={0} />
                       </div>
                     </div>
                   )}
