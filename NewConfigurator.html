@@ -385,10 +385,10 @@
                     <div className="form-group">
                       <label title="Show alarm popup on device display">Display Popup ⓘ</label>
                       <div style={{paddingTop:'0.25rem'}}>
-                        <label className="toggle-label" style={{gap:'1rem'}}>
+                        <label className="toggle-label">
                           <input type="checkbox" checked={a.popup} onChange={e => updateArr('alarms', i, {popup: e.target.checked})} />
-                          <span className="toggle-switch"></span>
-                          <span>{a.popup ? 'Enabled' : 'Disabled'}</span>
+                          <span className="toggle-switch" style={{flexShrink:0}}></span>
+                          <span style={{marginLeft:'0.5rem'}}>{a.popup ? 'Enabled' : 'Disabled'}</span>
                         </label>
                       </div>
                     </div>
