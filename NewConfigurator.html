@@ -144,7 +144,8 @@
       alarms:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Alarm${i+1}`,srcCh:0,srcType:'',alarmType:0,delay:0,alarmState:1,limitType:0,limit:0,hysteresis:0,popup:true,linkedDout:0,doutAction:'activate'})),
       push:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Push${i+1}`,mode:0,srcCh:0,delta:1,debounce:5,peerImei:''})),
       reporting:{rate:5,eodRate:1440},
-      dout:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DO${i+1}`,srcReg:0,srcActiveState:1,outActiveSrc:1,outNotActiveSrc:0,duration:0}))
+      dout:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DO${i+1}`,srcReg:0,srcActiveState:1,outActiveSrc:1,outNotActiveSrc:0,duration:0})),
+      originalLines:[] // Stores lines from imported config that wizard doesn't handle
     });
 
     function App() {
@@ -173,6 +174,255 @@
       };
       const reset = () => { if(confirm('Reset all?')) { setCfg(getDefault()); setStep(0); localStorage.removeItem(STORAGE_KEY); }};
 
+      const parseConfigFile = (text) => {
+        const rawLines = text.split('\n');
+        const newCfg = getDefault();
+        const originalLines = [];
+        
+        // Line types and indices that the wizard handles (will be regenerated)
+        const isWizardHandled = (lineType, idx, ch) => {
+          // Line 1: Site config
+          if (lineType === 1 && idx === 1) return true;
+          // Line 2: Options config (we preserve most but generate basic)
+          if (lineType === 2 && idx === 1) return true;
+          // Line 7: Reporting
+          if (lineType === 7 && idx === 1) return true;
+          // Line 9: Channels - only specific ranges
+          if (lineType === 9) {
+            // DI channels 21-30, AI channels 51-55, DO channels 71-75
+            // Totalizer 44-48, P2P receive 95-99
+            // Pump stats 11-18 (pump ctrl) or 31-40 (pump tracking)
+            if ((idx >= 21 && idx <= 30) || (idx >= 51 && idx <= 55) || 
+                (idx >= 71 && idx <= 75) || (idx >= 44 && idx <= 48) ||
+                (idx >= 95 && idx <= 99) || (idx >= 11 && idx <= 18) ||
+                (idx >= 31 && idx <= 40)) return true;
+          }
+          // Line 11: Analog inputs 1-5
+          if (lineType === 11 && idx >= 1 && idx <= 5) return true;
+          // Line 17: Digital inputs 1-10
+          if (lineType === 17 && idx >= 1 && idx <= 10) return true;
+          // Line 28: Push 1-10
+          if (lineType === 28 && idx >= 1 && idx <= 10) return true;
+          // Line 32: Totalizer 1-5
+          if (lineType === 32 && idx >= 1 && idx <= 5) return true;
+          // Line 33: Pump stats 1-5
+          if (lineType === 33 && idx >= 1 && idx <= 5) return true;
+          // Line 34: Alarms 1-10
+          if (lineType === 34 && idx >= 1 && idx <= 10) return true;
+          // Line 36: Digital outputs 1-5
+          if (lineType === 36 && idx >= 1 && idx <= 5) return true;
+          // Line 39: Pump control
+          if (lineType === 39 && idx === 1) return true;
+          return false;
+        };
+        
+        // Helper to parse line into key-value pairs
+        const parseLine = (line) => {
+          const parts = line.split(',');
+          const result = { lineType: +parts[0], idx: +parts[1], raw: line };
+          for (let i = 2; i < parts.length; i += 2) {
+            if (i + 1 < parts.length) {
+              const key = parts[i];
+              const val = parts[i + 1];
+              result[key] = isNaN(+val) || val === '' ? val : +val;
+            }
+          }
+          return result;
+        };
+        
+        // Process each line
+        rawLines.forEach((rawLine, lineNum) => {
+          const line = rawLine.trim();
+          
+          // Skip empty lines but preserve them in original
+          if (!line) {
+            originalLines.push({ type: 'empty', raw: rawLine, order: lineNum });
+            return;
+          }
+          
+          // Preserve comment lines
+          if (line.startsWith('//')) {
+            originalLines.push({ type: 'comment', raw: rawLine, order: lineNum });
+            return;
+          }
+          
+          // Try to parse as config line
+          const parts = line.split(',');
+          if (parts.length < 2 || isNaN(+parts[0])) {
+            // Not a valid config line, preserve as-is
+            originalLines.push({ type: 'other', raw: rawLine, order: lineNum });
+            return;
+          }
+          
+          const p = parseLine(line);
+          
+          // Check if wizard handles this line type/index
+          if (!isWizardHandled(p.lineType, p.idx)) {
+            // Preserve unhandled config lines
+            originalLines.push({ type: 'config', lineType: p.lineType, idx: p.idx, raw: rawLine, order: lineNum });
+          }
+          
+          // Parse wizard-handled lines into config state
+          // Line 1: Site config
+          if (p.lineType === 1) {
+            newCfg.site.name = p[1] || 'Site Name';
+            newCfg.site.timezone = p[3] ?? 2;
+            newCfg.site.dstOffset = p[2] ?? 0;
+            newCfg.site.modbusId = p[9] ?? 126;
+          }
+          
+          // Line 7: Reporting
+          if (p.lineType === 7) {
+            newCfg.reporting.eodRate = p[2] ?? 1440;
+            newCfg.reporting.rate = p[3] ?? 15;
+          }
+          
+          // Line 9: Channels (extract DI and AI names/enabled status)
+          if (p.lineType === 9) {
+            const ch = p.idx;
+            const name = p[1] || `Chan ${ch}`;
+            const enabled = p[2] === 1;
+            
+            // DI channels 21-30
+            if (ch >= 21 && ch <= 30) {
+              const idx = ch - 21;
+              newCfg.di[idx].name = name;
+              newCfg.di[idx].on = enabled;
+              newCfg.di[idx].lbl0 = p[31] || 'Off';
+              newCfg.di[idx].lbl1 = p[32] || 'On';
+              if (p[31] === 'Stopped' && p[32] === 'Running') {
+                newCfg.di[idx].type = 'pump_run';
+                newCfg.di[idx].isPump = true;
+              }
+            }
+            
+            // AI channels 51-55
+            if (ch >= 51 && ch <= 55) {
+              const idx = ch - 51;
+              newCfg.ai[idx].name = name;
+              newCfg.ai[idx].on = enabled;
+              newCfg.ai[idx].units = p[21] || 'units';
+              newCfg.ai[idx].prec = p[20] ?? 1;
+              newCfg.ai[idx].delta = p[22] ?? 1;
+              newCfg.ai[idx].debounce = p[23] ?? 5;
+            }
+          }
+          
+          // Line 11: Analog input details
+          if (p.lineType === 11 && p.idx >= 1 && p.idx <= 5) {
+            const idx = p.idx - 1;
+            newCfg.ai[idx].name = p[1] || newCfg.ai[idx].name;
+            newCfg.ai[idx].inputType = p[2] ?? 2;
+            newCfg.ai[idx].damp = p[3] ?? 0.5;
+            newCfg.ai[idx].zero = p[4] ?? 0;
+            newCfg.ai[idx].full = p[5] ?? 100;
+            newCfg.ai[idx].prec = p[6] ?? 1;
+            newCfg.ai[idx].on = true;
+            newCfg.ai[idx].preset = 'custom';
+          }
+          
+          // Line 17: Digital input names
+          if (p.lineType === 17 && p.idx >= 1 && p.idx <= 10) {
+            const idx = p.idx - 1;
+            newCfg.di[idx].name = p[1] || newCfg.di[idx].name;
+          }
+          
+          // Line 28: P2P/Push config
+          if (p.lineType === 28 && p.idx >= 1 && p.idx <= 10) {
+            const idx = p.idx - 1;
+            newCfg.push[idx].name = p[1] || newCfg.push[idx].name;
+            newCfg.push[idx].mode = p[2] ?? 0;
+            newCfg.push[idx].on = (p[2] ?? 0) > 0;
+            newCfg.push[idx].srcCh = p[3] ?? 0;
+            newCfg.push[idx].delta = p[5] ?? 1;
+            newCfg.push[idx].debounce = p[6] ?? 5;
+            newCfg.push[idx].peerImei = String(p[7] || '');
+          }
+          
+          // Line 32: Totalizer
+          if (p.lineType === 32 && p.idx >= 1 && p.idx <= 5) {
+            const srcReg = p[3];
+            if (srcReg >= 101 && srcReg <= 105) {
+              const aiIdx = srcReg - 101;
+              newCfg.ai[aiIdx].totalizer = true;
+              newCfg.ai[aiIdx].totConv = p[5] ?? 60;
+              newCfg.ai[aiIdx].minFlow = p[6] ?? 0;
+            }
+          }
+          
+          // Line 34: Alarms
+          if (p.lineType === 34 && p.idx >= 1 && p.idx <= 10) {
+            const idx = p.idx - 1;
+            newCfg.alarms[idx].name = p[1] || `Alarm${p.idx}`;
+            newCfg.alarms[idx].on = p[2] === 1;
+            newCfg.alarms[idx].popup = p[3] === 1;
+            newCfg.alarms[idx].alarmType = p[4] ?? 0;
+            newCfg.alarms[idx].srcCh = p[5] ?? 0;
+            newCfg.alarms[idx].delay = p[7] ?? 0;
+            newCfg.alarms[idx].limitType = p[9] ?? 0;
+            newCfg.alarms[idx].limit = p[10] ?? 0;
+            newCfg.alarms[idx].hysteresis = p[11] ?? 0;
+            newCfg.alarms[idx].alarmState = p[14] ?? 1;
+            const srcCh = p[5] ?? 0;
+            if (srcCh >= 21 && srcCh <= 30) {
+              newCfg.alarms[idx].srcType = 'digital';
+            } else if ((srcCh >= 51 && srcCh <= 55) || (srcCh >= 95 && srcCh <= 99)) {
+              newCfg.alarms[idx].srcType = 'analog';
+            }
+          }
+          
+          // Line 36: Digital outputs - check for alarm links
+          if (p.lineType === 36 && p.idx >= 1 && p.idx <= 5) {
+            const doNum = p.idx;
+            const srcReg = p[3];
+            if (srcReg >= 3501 && srcReg <= 3510) {
+              const alarmIdx = srcReg - 3501;
+              if (alarmIdx < 10) {
+                newCfg.alarms[alarmIdx].linkedDout = doNum;
+                newCfg.alarms[alarmIdx].doutAction = p[7] === 1 ? 'activate' : 'deactivate';
+              }
+            }
+          }
+          
+          // Line 39: Pump control
+          if (p.lineType === 39) {
+            newCfg.pumpCtrl.on = p[1] === 1;
+            newCfg.pumpCtrl.mode = p[2] ?? 1;
+            newCfg.pumpCtrl.levelSrc = p[8] ?? 0;
+            newCfg.pumpCtrl.leadOn = p[25] ?? 10;
+            newCfg.pumpCtrl.lagOn = p[26] ?? 12;
+            newCfg.pumpCtrl.allOff = p[27] ?? 5;
+            newCfg.pumpCtrl.debounce = p[30] ?? 5;
+            newCfg.pumpCtrl.startDly = p[31] ?? 3;
+          }
+        });
+        
+        newCfg.originalLines = originalLines;
+        return newCfg;
+      };
+      
+      const loadConfigFile = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const newCfg = parseConfigFile(ev.target.result);
+            setCfg(newCfg);
+            setStep(0);
+            const preservedCount = newCfg.originalLines?.filter(l => l.type === 'config').length || 0;
+            const msg = preservedCount > 0 
+              ? `Configuration loaded successfully!\n\n${preservedCount} config lines not covered by the wizard will be preserved in the output.`
+              : 'Configuration loaded successfully!';
+            alert(msg);
+          } catch (err) {
+            alert('Error parsing configuration file: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = ''; // Reset input
+      };
+
       const steps = [{id:'site',title:'Site Basics',icon:'🏢'},{id:'template',title:'Application',icon:'📋'},{id:'di',title:'Digital Inputs',icon:'🔘'},{id:'ai',title:'Analog Inputs',icon:'📈'},{id:'pump',title:'Pump Control',icon:'⚡'},{id:'alarm',title:'Alarms & Outputs',icon:'🚨'},{id:'push',title:'Peer-to-Peer',icon:'📡'},{id:'reporting',title:'Reporting',icon:'📶'},{id:'review',title:'Review',icon:'✅'}];
 
       return (
@@ -185,6 +435,8 @@
               <h1>Configuration Wizard</h1>
             </div>
             <div className="header-actions">
+              <input type="file" id="loadConfig" accept=".lfc,.txt,.log" onChange={loadConfigFile} style={{display:'none'}} />
+              <button className="btn" onClick={() => document.getElementById('loadConfig').click()} title="Load existing configuration file">📂 Load</button>
               <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☀️' : '🌙'}</button>
               <button className="btn btn-danger" onClick={reset}>🔄 Reset</button>
             </div>
@@ -487,8 +739,9 @@
       const generate = () => { if (!validate()) return; setOutput({ txt: generateConfigText(cfg), json: generateLosantJson(cfg), name: cfg.site.name }); };
       
       const linkedDoutCount = cfg.alarms.filter(a => a.on && a.linkedDout > 0).length;
+      const preservedConfigCount = cfg.originalLines?.filter(l => l.type === 'config').length || 0;
       
-      return (<div className="step-container"><div className="step-header"><h2>Review & Generate</h2><p>Review your configuration.</p></div>{errors.length > 0 && (<div className="validation-errors"><h4>⚠️ Validation Errors</h4><ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul></div>)}<div className="summary-grid"><div className="summary-card"><h4>Site</h4><p>{cfg.site.name}</p><p>TZ: {TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}</p></div><div className="summary-card"><h4>Digital Inputs</h4><p>{cfg.di.filter(d => d.on).length} configured</p><ul>{cfg.di.filter(d => d.on).slice(0, 4).map(d => <li key={d.idx}>DI{d.idx}: {d.name}</li>)}</ul></div><div className="summary-card"><h4>Analog Inputs</h4><p>{cfg.ai.filter(a => a.on).length} configured</p><ul>{cfg.ai.filter(a => a.on).map(a => <li key={a.idx}>AI{a.idx}: {a.name}</li>)}</ul></div><div className="summary-card"><h4>Pump Control</h4><p>{cfg.pumpCtrl.on ? 'Enabled' : 'Disabled'}</p>{cfg.pumpCtrl.on && <p>Mode: {cfg.pumpCtrl.mode === 0 ? 'Drain' : 'Fill'}</p>}</div><div className="summary-card"><h4>Alarms</h4><p>{cfg.alarms.filter(a => a.on).length} configured</p><p>{linkedDoutCount} linked to outputs</p></div><div className="summary-card"><h4>Peer-to-Peer</h4><p>{cfg.push.filter(p => p.on).length} configured</p></div><div className="summary-card"><h4>Reporting</h4><p>Rate: {cfg.reporting.rate} min</p><p>EOD: {cfg.reporting.eodRate} min</p></div></div><div className="generate-btn"><button className="btn btn-primary" style={{padding:'0.875rem 2rem',fontSize:'1rem'}} onClick={generate}>⚡ Generate Configuration</button></div></div>);
+      return (<div className="step-container"><div className="step-header"><h2>Review & Generate</h2><p>Review your configuration.</p></div>{errors.length > 0 && (<div className="validation-errors"><h4>⚠️ Validation Errors</h4><ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul></div>)}<div className="summary-grid"><div className="summary-card"><h4>Site</h4><p>{cfg.site.name}</p><p>TZ: {TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}</p></div><div className="summary-card"><h4>Digital Inputs</h4><p>{cfg.di.filter(d => d.on).length} configured</p><ul>{cfg.di.filter(d => d.on).slice(0, 4).map(d => <li key={d.idx}>DI{d.idx}: {d.name}</li>)}</ul></div><div className="summary-card"><h4>Analog Inputs</h4><p>{cfg.ai.filter(a => a.on).length} configured</p><ul>{cfg.ai.filter(a => a.on).map(a => <li key={a.idx}>AI{a.idx}: {a.name}</li>)}</ul></div><div className="summary-card"><h4>Pump Control</h4><p>{cfg.pumpCtrl.on ? 'Enabled' : 'Disabled'}</p>{cfg.pumpCtrl.on && <p>Mode: {cfg.pumpCtrl.mode === 0 ? 'Drain' : 'Fill'}</p>}</div><div className="summary-card"><h4>Alarms</h4><p>{cfg.alarms.filter(a => a.on).length} configured</p><p>{linkedDoutCount} linked to outputs</p></div><div className="summary-card"><h4>Peer-to-Peer</h4><p>{cfg.push.filter(p => p.on).length} configured</p></div><div className="summary-card"><h4>Reporting</h4><p>Rate: {cfg.reporting.rate} min</p><p>EOD: {cfg.reporting.eodRate} min</p></div>{preservedConfigCount > 0 && <div className="summary-card"><h4>📋 Preserved</h4><p>{preservedConfigCount} config lines</p><p style={{fontSize:'0.85rem',opacity:0.8}}>From imported file</p></div>}</div><div className="generate-btn"><button className="btn btn-primary" style={{padding:'0.875rem 2rem',fontSize:'1rem'}} onClick={generate}>⚡ Generate Configuration</button></div></div>);
     }
 
     function generateConfigText(cfg) {
@@ -572,6 +825,19 @@
           lines.push(`36,${doNum},1,${d.name},2,${d.on?1:0},3,${d.srcReg},4,${301+i},5,${d.srcActiveState},6,${d.outNotActiveSrc},7,${d.outActiveSrc},8,${d.duration},98,${4501+i}`);
         }
       });
+      
+      // Append original lines that weren't handled by the wizard
+      // (comments, unhandled config types like FTP, Serial, BLE, etc.)
+      if (cfg.originalLines && cfg.originalLines.length > 0) {
+        lines.push(''); // Blank line separator
+        lines.push('// ---- Preserved from original configuration ----');
+        
+        // Sort by original order and append
+        const sortedOriginal = [...cfg.originalLines].sort((a, b) => a.order - b.order);
+        sortedOriginal.forEach(ol => {
+          lines.push(ol.raw);
+        });
+      }
       
       return lines.join('\n');
     }
