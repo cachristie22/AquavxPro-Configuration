@@ -235,7 +235,19 @@
     }
 
     function AIStep({ cfg, updateArr }) {
-      return (<div className="step-container"><div className="step-header"><h2>Analog Inputs</h2><p>Configure 5 analog inputs (Channels 51-55).</p></div><div className="input-grid">{cfg.ai.map((a, i) => (<div key={i} className={`input-card ${a.on ? 'enabled' : ''}`} style={{gridColumn: a.on ? 'span 2' : 'span 1'}}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={a.on} onChange={e => updateArr('ai', i, {on: e.target.checked})} /><span className="toggle-switch"></span><span>AI {i+1}</span></label><span className="channel-badge">CH {51+i}</span></div>{a.on && (<div className="input-card-body"><div className="form-row"><div className="form-group" style={{gridColumn:'span 2'}}><label>Name</label><input value={a.name} onChange={e => updateArr('ai', i, {name: e.target.value})} /></div><div className="form-group"><label>Preset</label><select value={a.preset} onChange={e => { const p = SENSOR_PRESETS[e.target.value]; updateArr('ai', i, {preset: e.target.value, inputType: p.inputType, zero: p.zeroScale, full: p.fullScale, units: p.units, prec: p.precision, totConv: p.totalizerConversion || 60}); }}>{Object.entries(SENSOR_PRESETS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></div></div>{a.preset === 'custom' && (<div className="form-row"><div className="form-group"><label>Input Type</label><select value={a.inputType} onChange={e => updateArr('ai', i, {inputType: +e.target.value})}>{INPUT_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div></div>)}<div className="form-row"><div className="form-group"><label>Zero Scale</label><input type="number" value={a.zero} onChange={e => updateArr('ai', i, {zero: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Full Scale</label><input type="number" value={a.full} onChange={e => updateArr('ai', i, {full: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Units</label><input value={a.units} onChange={e => updateArr('ai', i, {units: e.target.value})} maxLength={7} /></div><div className="form-group"><label>Precision</label><select value={a.prec} onChange={e => updateArr('ai', i, {prec: +e.target.value})}>{[0,1,2,3].map(p => <option key={p} value={p}>{p} dec</option>)}</select></div></div><div className="form-row"><div className="form-group"><label title="Minimum change in value required to trigger a report.">Delta ⓘ</label><input type="number" value={a.delta} onChange={e => updateArr('ai', i, {delta: +e.target.value})} step="0.1" min="0" /></div><div className="form-group"><label title="Stabilization period in seconds.">Debounce (sec) ⓘ</label><input type="number" value={a.debounce} onChange={e => updateArr('ai', i, {debounce: +e.target.value})} min="0" /></div></div>{SENSOR_PRESETS[a.preset]?.category === 'flow' && (<div style={{marginTop:'1rem',paddingTop:'1rem',borderTop:'1px solid var(--border-subtle)'}}><label className="toggle-label"><input type="checkbox" checked={a.totalizer} onChange={e => updateArr('ai', i, {totalizer: e.target.checked})} /><span className="toggle-switch"></span><span>Enable Totalizer</span></label>{a.totalizer && (<div className="form-row" style={{marginTop:'0.75rem'}}><div className="form-group"><label>Conversion</label><input type="number" value={a.totConv} onChange={e => updateArr('ai', i, {totConv: +e.target.value})} /><p className="form-help">GPM × factor</p></div><div className="form-group"><label>Min Flow</label><input type="number" value={a.minFlow} onChange={e => updateArr('ai', i, {minFlow: +e.target.value})} /></div></div>)}</div>)}</div>)}</div>))}</div></div>);
+      // Calculate totalizer channel for each AI
+      const getTotalizerChannel = (aiIdx) => {
+        let totCount = 0;
+        for (let i = 0; i < cfg.ai.length; i++) {
+          if (cfg.ai[i].on && cfg.ai[i].totalizer) {
+            if (i === aiIdx) return 44 + totCount;
+            totCount++;
+          }
+        }
+        return null;
+      };
+      
+      return (<div className="step-container"><div className="step-header"><h2>Analog Inputs</h2><p>Configure 5 analog inputs (Channels 51-55).</p></div><div className="input-grid">{cfg.ai.map((a, i) => (<div key={i} className={`input-card ${a.on ? 'enabled' : ''}`} style={{gridColumn: a.on ? 'span 2' : 'span 1'}}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={a.on} onChange={e => updateArr('ai', i, {on: e.target.checked})} /><span className="toggle-switch"></span><span>AI {i+1}</span></label><span className="channel-badge">CH {51+i}</span></div>{a.on && (<div className="input-card-body"><div className="form-row"><div className="form-group" style={{gridColumn:'span 2'}}><label>Name</label><input value={a.name} onChange={e => updateArr('ai', i, {name: e.target.value})} /></div><div className="form-group"><label>Preset</label><select value={a.preset} onChange={e => { const p = SENSOR_PRESETS[e.target.value]; updateArr('ai', i, {preset: e.target.value, inputType: p.inputType, zero: p.zeroScale, full: p.fullScale, units: p.units, prec: p.precision, totConv: p.totalizerConversion || 60}); }}>{Object.entries(SENSOR_PRESETS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></div></div>{a.preset === 'custom' && (<div className="form-row"><div className="form-group"><label>Input Type</label><select value={a.inputType} onChange={e => updateArr('ai', i, {inputType: +e.target.value})}>{INPUT_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div></div>)}<div className="form-row"><div className="form-group"><label>Zero Scale</label><input type="number" value={a.zero} onChange={e => updateArr('ai', i, {zero: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Full Scale</label><input type="number" value={a.full} onChange={e => updateArr('ai', i, {full: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Units</label><input value={a.units} onChange={e => updateArr('ai', i, {units: e.target.value})} maxLength={7} /></div><div className="form-group"><label>Precision</label><select value={a.prec} onChange={e => updateArr('ai', i, {prec: +e.target.value})}>{[0,1,2,3].map(p => <option key={p} value={p}>{p} dec</option>)}</select></div></div><div className="form-row"><div className="form-group"><label title="Minimum change in value required to trigger a report.">Delta ⓘ</label><input type="number" value={a.delta} onChange={e => updateArr('ai', i, {delta: +e.target.value})} step="0.1" min="0" /></div><div className="form-group"><label title="Stabilization period in seconds.">Debounce (sec) ⓘ</label><input type="number" value={a.debounce} onChange={e => updateArr('ai', i, {debounce: +e.target.value})} min="0" /></div></div>{SENSOR_PRESETS[a.preset]?.category === 'flow' && (<div style={{marginTop:'1rem',paddingTop:'1rem',borderTop:'1px solid var(--border-subtle)'}}><label className="toggle-label"><input type="checkbox" checked={a.totalizer} onChange={e => updateArr('ai', i, {totalizer: e.target.checked})} /><span className="toggle-switch"></span><span>Enable Totalizer</span></label>{a.totalizer && (<><div className="form-row" style={{marginTop:'0.75rem'}}><div className="form-group"><label>Conversion</label><input type="number" value={a.totConv} onChange={e => updateArr('ai', i, {totConv: +e.target.value})} /><p className="form-help">GPM × factor</p></div><div className="form-group"><label>Min Flow</label><input type="number" value={a.minFlow} onChange={e => updateArr('ai', i, {minFlow: +e.target.value})} /></div></div><div className="pump-badge">📊 Daily Total Output: CH {getTotalizerChannel(i)} (resets at midnight)</div></>)}</div>)}</div>)}</div>))}</div></div>);
     }
 
     function PumpStep({ cfg, update }) {
@@ -603,6 +615,18 @@
         return `9,${ch},1,Chan ${ch},2,0,3,0,4,1,5,0,6,0,98,${1000+ch}`;
       }
       
+      // Totalizer output channels 44-48 (daily totals, reset at midnight)
+      if (ch >= 44 && ch <= 48) {
+        const totIdx = ch - 44;
+        // Build list of AIs with totalizer enabled
+        const totalizerAIs = cfg.ai.filter(a => a.on && a.totalizer);
+        if (totIdx < totalizerAIs.length) {
+          const a = totalizerAIs[totIdx];
+          return `9,${ch},1,${a.name} Daily Total,2,1,3,2,4,1,5,${2501+totIdx},6,4,20,${a.prec},21,gal,98,${1000+ch}`;
+        }
+        return `9,${ch},1,Chan ${ch},2,0,3,0,4,1,5,0,6,0,98,${1000+ch}`;
+      }
+      
       if (ch >= 71 && ch <= 75) {
         const idx = ch - 71;
         const doNum = idx + 1;
@@ -634,6 +658,14 @@
       const attrs = [], tags = [{key:'deviceType',value:'aquavx-proplus'},{key:'timezone',value:TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}];
       cfg.di.filter(d => d.on).forEach(d => { attrs.push({name:`ch${20+d.idx}`,dataType:'boolean',description:d.name}); tags.push({key:`ch${20+d.idx}_name`,value:d.name},{key:`ch${20+d.idx}_normal_state`,value:String(d.normalState)}); });
       cfg.ai.filter(a => a.on).forEach(a => { attrs.push({name:`ch${50+a.idx}`,dataType:'number',description:a.name}); tags.push({key:`ch${50+a.idx}_name`,value:a.name},{key:`ch${50+a.idx}_units`,value:a.units}); });
+      
+      // Totalizer channels (44-48) - daily totals
+      const totalizerAIs = cfg.ai.filter(a => a.on && a.totalizer);
+      totalizerAIs.forEach((a, i) => {
+        const ch = 44 + i;
+        attrs.push({name:`ch${ch}`,dataType:'number',description:`${a.name} Daily Total`});
+        tags.push({key:`ch${ch}_name`,value:`${a.name} Daily Total`},{key:`ch${ch}_units`,value:'gal'});
+      });
       
       if (cfg.pumpCtrl.on) {
         for (let p = 1; p <= 2; p++) {
