@@ -129,7 +129,7 @@
     const INPUT_TYPES = [{id:0,name:'None'},{id:1,name:'0-20mA'},{id:2,name:'4-20mA'},{id:3,name:'0-5V'},{id:4,name:'1-5V'},{id:5,name:'+/-600ACV'},{id:6,name:'+/-5AAC'}];
     const DI_TYPES = [{id:'status',name:'General Status',labels:['Off','On']},{id:'pump_run',name:'Pump Run',labels:['Stopped','Running']},{id:'fault',name:'Fault/Alarm',labels:['Normal','Fault']},{id:'float_high',name:'High Float',labels:['Normal','High']},{id:'float_low',name:'Low Float',labels:['Normal','Low']}];
     const TEMPLATES = [
-      {id:'lift_station',name:'Lift Station',desc:'Duplex pumps with level sensor',icon:'🏭',help:'<strong>Lift Station Configuration</strong><br><br>A duplex pump station for wastewater collection.<br><br><strong>Digital Inputs:</strong><br>• DI1: Pump 1 Run status<br>• DI2: Pump 2 Run status<br>Both enable pump run tracking.<br><br><strong>Analog Inputs:</strong><br>• AI1: Wet Well Level (0-15 PSI = 0-34.6 ft)<br><br><strong>Pump Control:</strong> Enabled',defaults:{di:[{name:'Pump 1 Run',type:'pump_run'},{name:'Pump 2 Run',type:'pump_run'}],ai:[{name:'Wet Well Level',preset:'level_psi_0-15'}],pumpCtrl:true}},
+      {id:'lift_station',name:'Lift Station',desc:'Lift Station with Duplex Pump Control',icon:'🏭',help:'<strong>Lift Station Configuration</strong><br><br>A duplex pump station for wastewater collection.<br><br><strong>Digital Inputs:</strong><br>• DI1: Pump 1 Run status<br>• DI2: Pump 2 Run status<br>Both enable pump run tracking.<br><br><strong>Analog Inputs:</strong><br>• AI1: Wet Well Level (0-15 PSI = 0-34.6 ft)<br><br><strong>Pump Control:</strong> Enabled',defaults:{di:[{name:'Pump 1 Run',type:'pump_run'},{name:'Pump 2 Run',type:'pump_run'}],ai:[{name:'Wet Well Level',preset:'level_psi_0-15'}],pumpCtrl:true}},
       {id:'well_station',name:'Well Station',desc:'Pump with flow meter',icon:'💧',help:'<strong>Well Station Configuration</strong><br><br>Groundwater pumping with flow measurement.<br><br><strong>Digital Inputs:</strong><br>• DI1: Well Pump Run with tracking<br><br><strong>Analog Inputs:</strong><br>• AI1: Flow Rate (0-500 GPM) with totalizer<br><br><strong>Pump Control:</strong> Disabled',defaults:{di:[{name:'Well Pump',type:'pump_run'}],ai:[{name:'Flow Rate',preset:'flow_mag_0-500gpm',totalizer:true}],pumpCtrl:false}},
       {id:'tank',name:'Tank Monitor',desc:'Level monitoring',icon:'🛢️',help:'<strong>Tank Monitor Configuration</strong><br><br>Storage tank level monitoring.<br><br><strong>Digital Inputs:</strong> None<br><br><strong>Analog Inputs:</strong><br>• AI1: Tank Level (0-30 PSI = 0-69.2 ft)<br><br><strong>Pump Control:</strong> Disabled',defaults:{di:[],ai:[{name:'Tank Level',preset:'level_psi_0-30'}],pumpCtrl:false}},
       {id:'custom',name:'Custom',desc:'Start from scratch',icon:'⚙️',help:'<strong>Custom Configuration</strong><br><br>Blank configuration for unique applications.',defaults:{di:[],ai:[],pumpCtrl:false}}
@@ -384,13 +384,10 @@
                     </div>
                     <div className="form-group">
                       <label title="Show alarm popup on device display">Display Popup ⓘ</label>
-                      <div style={{paddingTop:'0.25rem'}}>
-                        <label className="toggle-label">
-                          <input type="checkbox" checked={a.popup} onChange={e => updateArr('alarms', i, {popup: e.target.checked})} />
-                          <span className="toggle-switch" style={{flexShrink:0}}></span>
-                          <span style={{marginLeft:'0.5rem'}}>{a.popup ? 'Enabled' : 'Disabled'}</span>
-                        </label>
-                      </div>
+                      <select value={a.popup ? 1 : 0} onChange={e => updateArr('alarms', i, {popup: +e.target.value === 1})}>
+                        <option value={1}>Enabled</option>
+                        <option value={0}>Disabled</option>
+                      </select>
                     </div>
                   </div>
                   
