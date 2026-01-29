@@ -418,7 +418,23 @@
             const newCfg = parseConfigFile(ev.target.result);
             setCfg(newCfg);
             setStep(0);
-            const preservedCount = newCfg.originalLines?.filter(l => l.type === 'config').length || 0;
+            // Count only non-wizard-managed config lines
+            const isWizardManaged = (lt, idx) => {
+              if (lt === 1 && idx === 1) return true;
+              if (lt === 2 && idx === 1) return true;
+              if (lt === 7 && idx === 1) return true;
+              if (lt === 9 && idx >= 1 && idx <= 100) return true;
+              if (lt === 11 && idx >= 1 && idx <= 5) return true;
+              if (lt === 17 && idx >= 1 && idx <= 10) return true;
+              if (lt === 28 && idx >= 1 && idx <= 10) return true;
+              if (lt === 32 && idx >= 1 && idx <= 5) return true;
+              if (lt === 33 && idx >= 1 && idx <= 5) return true;
+              if (lt === 34 && idx >= 1 && idx <= 10) return true;
+              if (lt === 36 && idx >= 1 && idx <= 5) return true;
+              if (lt === 39 && idx === 1) return true;
+              return false;
+            };
+            const preservedCount = newCfg.originalLines?.filter(l => l.type === 'config' && !isWizardManaged(l.lineType, l.idx)).length || 0;
             const msg = preservedCount > 0 
               ? `Configuration loaded successfully!\n\n${preservedCount} config lines not covered by the wizard will be preserved in the output.`
               : 'Configuration loaded successfully!';
@@ -747,21 +763,92 @@
       const generate = () => { if (!validate()) return; setOutput({ txt: generateConfigText(cfg), json: generateLosantJson(cfg), name: cfg.site.name }); };
       
       const linkedDoutCount = cfg.alarms.filter(a => a.on && a.linkedDout > 0).length;
-      const preservedConfigCount = cfg.originalLines?.filter(l => l.type === 'config').length || 0;
+      
+      // Count only truly preserved (non-wizard-managed) config lines
+      const isWizardManaged = (lineType, idx) => {
+        if (lineType === 1 && idx === 1) return true;
+        if (lineType === 2 && idx === 1) return true;
+        if (lineType === 7 && idx === 1) return true;
+        if (lineType === 9 && idx >= 1 && idx <= 100) return true;
+        if (lineType === 11 && idx >= 1 && idx <= 5) return true;
+        if (lineType === 17 && idx >= 1 && idx <= 10) return true;
+        if (lineType === 28 && idx >= 1 && idx <= 10) return true;
+        if (lineType === 32 && idx >= 1 && idx <= 5) return true;
+        if (lineType === 33 && idx >= 1 && idx <= 5) return true;
+        if (lineType === 34 && idx >= 1 && idx <= 10) return true;
+        if (lineType === 36 && idx >= 1 && idx <= 5) return true;
+        if (lineType === 39 && idx === 1) return true;
+        return false;
+      };
+      const preservedConfigCount = cfg.originalLines?.filter(l => {
+        if (l.type !== 'config') return false;
+        return !isWizardManaged(l.lineType, l.idx);
+      }).length || 0;
       
       return (<div className="step-container"><div className="step-header"><h2>Review & Generate</h2><p>Review your configuration.</p></div>{errors.length > 0 && (<div className="validation-errors"><h4>⚠️ Validation Errors</h4><ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul></div>)}<div className="summary-grid"><div className="summary-card"><h4>Site</h4><p>{cfg.site.name}</p><p>TZ: {TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}</p></div><div className="summary-card"><h4>Digital Inputs</h4><p>{cfg.di.filter(d => d.on).length} configured</p><ul>{cfg.di.filter(d => d.on).slice(0, 4).map(d => <li key={d.idx}>DI{d.idx}: {d.name}</li>)}</ul></div><div className="summary-card"><h4>Analog Inputs</h4><p>{cfg.ai.filter(a => a.on).length} configured</p><ul>{cfg.ai.filter(a => a.on).map(a => <li key={a.idx}>AI{a.idx}: {a.name}</li>)}</ul></div><div className="summary-card"><h4>Pump Control</h4><p>{cfg.pumpCtrl.on ? 'Enabled' : 'Disabled'}</p>{cfg.pumpCtrl.on && <p>Mode: {cfg.pumpCtrl.mode === 0 ? 'Drain' : 'Fill'}</p>}</div><div className="summary-card"><h4>Alarms</h4><p>{cfg.alarms.filter(a => a.on).length} configured</p><p>{linkedDoutCount} linked to outputs</p></div><div className="summary-card"><h4>Peer-to-Peer</h4><p>{cfg.push.filter(p => p.on).length} configured</p></div><div className="summary-card"><h4>Reporting</h4><p>Rate: {cfg.reporting.rate} min</p><p>EOD: {cfg.reporting.eodRate} min</p></div>{preservedConfigCount > 0 && <div className="summary-card"><h4>📋 Preserved</h4><p>{preservedConfigCount} config lines</p><p style={{fontSize:'0.85rem',opacity:0.8}}>From imported file</p></div>}</div><div className="generate-btn"><button className="btn btn-primary" style={{padding:'0.875rem 2rem',fontSize:'1rem'}} onClick={generate}>⚡ Generate Configuration</button></div></div>);
     }
 
     function generateConfigText(cfg) {
-      let lines = [];
-      // Line 1 - Site config with all standard fields
-      // Extra fields: 17=satepoch, 21=smscalldly, 22=resenddly, 51=ledbright, 52=dispbright, 53=disptout, 55-58=favpages
-      lines.push(`1,1,${cfg.site.name},2,${cfg.site.dstOffset || 0},3,${cfg.site.timezone},7,1,8,1,9,${cfg.site.modbusId},11,0,13,10,14,1,15,600,17,1399818235,21,60,22,30,51,100,52,100,53,60,55,42,56,23,57,45,58,100`);
-      // Line 2 - Options config
-      lines.push('2,1,0,3,0,17,0,28,1,29,1,30,0');
-      // Line 7 - Reporting config
-      lines.push(`7,1,0,2,${cfg.reporting.eodRate},3,${cfg.reporting.rate},8,124,9,38,20,30`);
+      // Map to hold all config lines by "lineType,idx" key
+      const configMap = new Map();
       
+      // Helper to check if a line type/idx is managed by the wizard
+      const isWizardManaged = (lineType, idx) => {
+        if (lineType === 1 && idx === 1) return true;
+        if (lineType === 2 && idx === 1) return true;
+        if (lineType === 7 && idx === 1) return true;
+        // Channels: only specific ranges are wizard-managed
+        if (lineType === 9) {
+          if (idx >= 11 && idx <= 18) return cfg.pumpCtrl.on; // Pump ctrl stats
+          if (idx >= 21 && idx <= 30) return true; // DI channels
+          if (idx >= 31 && idx <= 40) return true; // Pump stats (manual) or HOA
+          if (idx >= 44 && idx <= 48) return true; // Totalizer outputs
+          if (idx >= 51 && idx <= 55) return true; // AI channels
+          if (idx >= 71 && idx <= 75) return true; // DO channels
+          if (idx >= 95 && idx <= 99) return true; // P2P receive
+          return false; // Other channels not wizard-managed
+        }
+        if (lineType === 11 && idx >= 1 && idx <= 5) return true;
+        if (lineType === 17 && idx >= 1 && idx <= 10) return true;
+        if (lineType === 28 && idx >= 1 && idx <= 10) return true;
+        if (lineType === 32 && idx >= 1 && idx <= 5) return true;
+        if (lineType === 33 && idx >= 1 && idx <= 5) return true;
+        if (lineType === 34 && idx >= 1 && idx <= 10) return true;
+        if (lineType === 36 && idx >= 1 && idx <= 5) return true;
+        if (lineType === 39 && idx === 1) return true;
+        return false;
+      };
+      
+      // Helper to add a line to the map
+      const addLine = (lineStr) => {
+        const parts = lineStr.split(',');
+        const lineType = parseInt(parts[0]);
+        const idx = parseInt(parts[1]);
+        const key = `${lineType},${idx}`;
+        configMap.set(key, { lineType, idx, line: lineStr });
+      };
+      
+      // First, add all original config lines (only non-wizard-managed will survive)
+      if (cfg.originalLines && cfg.originalLines.length > 0) {
+        cfg.originalLines.forEach(ol => {
+          if (ol.type === 'config') {
+            addLine(ol.raw.trim());
+          }
+        });
+      }
+      
+      // Now generate and add wizard-managed lines (these will override originals)
+      
+      // Line 1 - Site config
+      addLine(`1,1,${cfg.site.name},2,${cfg.site.dstOffset || 0},3,${cfg.site.timezone},7,1,8,1,9,${cfg.site.modbusId},11,0,13,10,14,1,15,600,17,1399818235,21,60,22,30,51,100,52,100,53,60,55,42,56,23,57,45,58,100`);
+      
+      // Line 2 - Options config
+      addLine('2,1,0,3,0,17,0,28,1,29,1,30,0');
+      
+      // Line 7 - Reporting config
+      addLine(`7,1,0,2,${cfg.reporting.eodRate},3,${cfg.reporting.rate},8,124,9,38,20,30`);
+      
+      // Line 9 - Channels (only wizard-managed channels)
       const pumpChannels = [];
       cfg.di.forEach((d, i) => {
         if (d.on && d.isPump && i < 5) {
@@ -769,43 +856,61 @@
         }
       });
       
-      for (let ch = 1; ch <= 100; ch++) lines.push(genChanLine(ch, cfg, pumpChannels));
+      // Generate only wizard-managed channels
+      const wizardChannels = [];
+      if (cfg.pumpCtrl.on) {
+        for (let ch = 11; ch <= 18; ch++) wizardChannels.push(ch);
+      }
+      for (let ch = 21; ch <= 30; ch++) wizardChannels.push(ch);
+      for (let ch = 31; ch <= 40; ch++) wizardChannels.push(ch);
+      for (let ch = 44; ch <= 48; ch++) wizardChannels.push(ch);
+      for (let ch = 51; ch <= 55; ch++) wizardChannels.push(ch);
+      for (let ch = 71; ch <= 75; ch++) wizardChannels.push(ch);
+      for (let ch = 95; ch <= 99; ch++) wizardChannels.push(ch);
+      
+      wizardChannels.forEach(ch => {
+        addLine(genChanLine(ch, cfg, pumpChannels));
+      });
       
       // Line 11 - Analog inputs with calibration fields
-      // Format: 11,{idx},1,{name},2,{inputType},3,{damp},4,{zero},5,{full},6,{prec},11,{rawoff},12,{zerocnt},13,{fullcnt},14,{zeroengr},15,{fullengr},98,{reg}
       cfg.ai.forEach((a, i) => {
-        // Calibration defaults based on input type
         let zerocnt, fullcnt, zeroengr, fullengr;
         if (a.inputType === 2) { // 4-20mA
           zerocnt = 461; fullcnt = 2313; zeroengr = 4.0; fullengr = 20.0;
         } else if (a.inputType === 3) { // 0-5V
           zerocnt = 0; fullcnt = 3720; zeroengr = 0.0; fullengr = 5.0;
-        } else { // Default/other
+        } else {
           zerocnt = 0; fullcnt = 4095; zeroengr = 0.0; fullengr = 100.0;
         }
-        lines.push(`11,${i+1},1,${a.name},2,${a.inputType},3,${a.damp.toFixed(3)},4,${a.zero.toFixed(1)},5,${a.full.toFixed(1)},6,${a.prec},11,10,12,${zerocnt},13,${fullcnt},14,${zeroengr.toFixed(1)},15,${fullengr.toFixed(1)},98,${101+i}`);
+        addLine(`11,${i+1},1,${a.name},2,${a.inputType},3,${a.damp.toFixed(3)},4,${a.zero.toFixed(1)},5,${a.full.toFixed(1)},6,${a.prec},11,10,12,${zerocnt},13,${fullcnt},14,${zeroengr.toFixed(1)},15,${fullengr.toFixed(1)},98,${101+i}`);
       });
       
-      cfg.di.forEach((d, i) => lines.push(`17,${i+1},1,${d.name},98,${201+i}`));
+      // Line 17 - Digital inputs
+      cfg.di.forEach((d, i) => {
+        addLine(`17,${i+1},1,${d.name},98,${201+i}`);
+      });
       
-      // Line 32 - Totalizers with dest channels and dual output registers
-      // Format: 32,{idx},1,{name},2,{enable},3,{srcreg},4,{prec},5,{flowconv},6,{minflow},20,{ratedestchan},21,{totaldestchan},98,{reg1},98,{reg2}
+      // Line 28 - Push/P2P config
+      cfg.push.forEach((p, i) => {
+        addLine(`28,${i+1},1,${p.name},2,${p.on?p.mode:0},3,${p.srcCh},5,${p.delta.toFixed(2)},6,${p.debounce},7,${p.peerImei},98,${1500+i}`);
+      });
+      
+      // Line 32 - Totalizers
       let totIdx = 0; 
       cfg.ai.forEach((a, i) => { 
         if (a.on && a.totalizer && totIdx < 5) { 
-          lines.push(`32,${totIdx+1},1,${a.name},2,1,3,${101+i},4,${a.prec},5,${a.totConv.toFixed(1)},6,${a.minFlow.toFixed(1)},20,0,21,0,98,${2501+totIdx},98,${2601+totIdx}`); 
+          addLine(`32,${totIdx+1},1,${a.name},2,1,3,${101+i},4,${a.prec},5,${a.totConv.toFixed(1)},6,${a.minFlow.toFixed(1)},20,0,21,0,98,${2501+totIdx},98,${2601+totIdx}`); 
           totIdx++; 
         }
       });
       
       // Line 33 - Pump stats (when pump control disabled)
-      // Format: 33,{idx},1,{name},2,{enable},3,{srcreg},4,{runstate},20,{rundest},21,{strtsdest},22,{durdest},23,0,98,{reg1},98,{reg2},98,{reg3},98,{reg4}
       if (!cfg.pumpCtrl.on) {
         let pumpIdx = 0; 
         cfg.di.forEach((d, i) => { 
           if (d.on && d.isPump && i < 5) { 
             const pumpName = d.name.replace(' Run','');
-            lines.push(`33,${pumpIdx+1},1,${pumpName},2,1,3,${201+i},4,1,20,0,21,0,22,0,23,0,98,${3001+pumpIdx},98,${3101+pumpIdx},98,${3201+pumpIdx},98,${3301+pumpIdx}`); 
+            addLine(`33,${pumpIdx+1},1,${pumpName},2,1,3,${201+i},4,1,20,0,21,0,22,0,23,0,98,${3001+pumpIdx},98,${3101+pumpIdx},98,${3201+pumpIdx},98,${3301+pumpIdx}`); 
             pumpIdx++; 
           }
         });
@@ -819,22 +924,14 @@
         }
         return 1;
       };
-      
       cfg.alarms.forEach((a, i) => {
         const prec = a.srcType === 'analog' ? getSourcePrec(a.srcCh) : 1;
         if (a.srcType === 'analog') {
-          lines.push(`34,${i+1},1,${a.name},2,${a.on?1:0},3,${a.popup?1:0},4,${a.alarmType},5,${a.srcCh},6,${prec},7,${a.delay},8,0,9,${a.limitType},10,${a.limit.toFixed(1)},11,${a.hysteresis.toFixed(1)},12,-1.0,13,-1.0,14,1,98,${3501+i},98,${3601+i},98,${3701+i}`);
+          addLine(`34,${i+1},1,${a.name},2,${a.on?1:0},3,${a.popup?1:0},4,${a.alarmType},5,${a.srcCh},6,${prec},7,${a.delay},8,0,9,${a.limitType},10,${a.limit.toFixed(1)},11,${a.hysteresis.toFixed(1)},12,-1.0,13,-1.0,14,1,98,${3501+i},98,${3601+i},98,${3701+i}`);
         } else {
-          lines.push(`34,${i+1},1,${a.name},2,${a.on?1:0},3,${a.popup?1:0},4,${a.alarmType},5,${a.srcCh},6,1,7,${a.delay},8,0,9,0,10,-1.0,11,0.0,12,-1.0,13,-1.0,14,${a.alarmState},98,${3501+i},98,${3601+i},98,${3701+i}`);
+          addLine(`34,${i+1},1,${a.name},2,${a.on?1:0},3,${a.popup?1:0},4,${a.alarmType},5,${a.srcCh},6,1,7,${a.delay},8,0,9,0,10,-1.0,11,0.0,12,-1.0,13,-1.0,14,${a.alarmState},98,${3501+i},98,${3601+i},98,${3701+i}`);
         }
       });
-      
-      cfg.push.forEach((p, i) => lines.push(`28,${i+1},1,${p.name},2,${p.on?p.mode:0},3,${p.srcCh},5,${p.delta.toFixed(2)},6,${p.debounce},7,${p.peerImei},98,${1500+i}`));
-      
-      if (cfg.pumpCtrl.on) {
-        const levelSrcReg = cfg.pumpCtrl.levelSrc || 0;
-        lines.push(`39,1,1,2,${cfg.pumpCtrl.mode},3,2,7,1,8,${levelSrcReg},9,201,12,202,25,${cfg.pumpCtrl.leadOn.toFixed(1)},26,${cfg.pumpCtrl.lagOn.toFixed(1)},27,${cfg.pumpCtrl.allOff.toFixed(1)},30,${cfg.pumpCtrl.debounce},31,${cfg.pumpCtrl.startDly},43,71,44,72`);
-      }
       
       // Line 36 - Digital Outputs
       const alarmLinkedDouts = {};
@@ -847,36 +944,35 @@
           };
         }
       });
-      
       cfg.dout.forEach((d, i) => {
         const doNum = i + 1;
         if (cfg.pumpCtrl.on && i < 2) {
-          lines.push(`36,${doNum},1,Pump${doNum} CallToStart,2,1,3,${5501+i},4,${301+i},5,1,6,0,7,1,8,0,98,${4501+i}`);
+          addLine(`36,${doNum},1,Pump${doNum} CallToStart,2,1,3,${5501+i},4,${301+i},5,1,6,0,7,1,8,0,98,${4501+i}`);
         } else if (alarmLinkedDouts[doNum]) {
           const link = alarmLinkedDouts[doNum];
           const srcReg = 3501 + link.alarmIdx;
           const outActiveSrc = link.action === 'activate' ? 1 : 0;
           const outNotActiveSrc = link.action === 'activate' ? 0 : 1;
-          lines.push(`36,${doNum},1,${link.alarmName},2,1,3,${srcReg},4,${301+i},5,1,6,${outNotActiveSrc},7,${outActiveSrc},8,0,98,${4501+i}`);
+          addLine(`36,${doNum},1,${link.alarmName},2,1,3,${srcReg},4,${301+i},5,1,6,${outNotActiveSrc},7,${outActiveSrc},8,0,98,${4501+i}`);
         } else {
-          lines.push(`36,${doNum},1,${d.name},2,${d.on?1:0},3,${d.srcReg},4,${301+i},5,${d.srcActiveState},6,${d.outNotActiveSrc},7,${d.outActiveSrc},8,${d.duration},98,${4501+i}`);
+          addLine(`36,${doNum},1,${d.name},2,${d.on?1:0},3,${d.srcReg},4,${301+i},5,${d.srcActiveState},6,${d.outNotActiveSrc},7,${d.outActiveSrc},8,${d.duration},98,${4501+i}`);
         }
       });
       
-      // Append original lines that weren't handled by the wizard
-      // (comments, unhandled config types like FTP, Serial, BLE, etc.)
-      if (cfg.originalLines && cfg.originalLines.length > 0) {
-        lines.push(''); // Blank line separator
-        lines.push('// ---- Preserved from original configuration ----');
-        
-        // Sort by original order and append
-        const sortedOriginal = [...cfg.originalLines].sort((a, b) => a.order - b.order);
-        sortedOriginal.forEach(ol => {
-          lines.push(ol.raw);
-        });
+      // Line 39 - Pump control (only if enabled)
+      if (cfg.pumpCtrl.on) {
+        const levelSrcReg = cfg.pumpCtrl.levelSrc || 0;
+        addLine(`39,1,1,2,${cfg.pumpCtrl.mode},3,2,7,1,8,${levelSrcReg},9,201,12,202,25,${cfg.pumpCtrl.leadOn.toFixed(1)},26,${cfg.pumpCtrl.lagOn.toFixed(1)},27,${cfg.pumpCtrl.allOff.toFixed(1)},30,${cfg.pumpCtrl.debounce},31,${cfg.pumpCtrl.startDly},43,71,44,72`);
       }
       
-      return lines.join('\n');
+      // Sort all lines by lineType, then by idx
+      const sortedLines = Array.from(configMap.values()).sort((a, b) => {
+        if (a.lineType !== b.lineType) return a.lineType - b.lineType;
+        return a.idx - b.idx;
+      });
+      
+      // Return just the line strings
+      return sortedLines.map(item => item.line).join('\n');
     }
 
     function genChanLine(ch, cfg, pumpChannels) {
