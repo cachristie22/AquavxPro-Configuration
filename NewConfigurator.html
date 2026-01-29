@@ -1,151 +1,821 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aquavx ProPlus Configuration Wizard</title>
+  <title>Aquavx Pro Configuration Wizard</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    :root { --bg-body: linear-gradient(135deg, #0a1628 0%, #1a2744 100%); --bg-header: rgba(15, 23, 42, 0.95); --bg-card: rgba(30, 41, 59, 0.5); --bg-input: rgba(15, 23, 42, 0.8); --bg-sidebar: rgba(15, 23, 42, 0.8); --border-main: rgba(59, 130, 246, 0.3); --border-subtle: rgba(148, 163, 184, 0.2); --text-main: #e2e8f0; --text-dim: #94a3b8; --text-muted: #64748b; --text-head: #f1f5f9; --accent: #3b82f6; --accent-light: #60a5fa; --success: #22c55e; --danger: #fca5a5; --danger-bg: rgba(239, 68, 68, 0.2); --btn-bg: rgba(71, 85, 105, 0.5); --toggle-bg: rgba(71, 85, 105, 0.5); --modal-bg: #1e293b; }
-    [data-theme="light"] { --bg-body: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); --bg-header: rgba(255, 255, 255, 0.98); --bg-card: rgba(255, 255, 255, 0.9); --bg-input: #ffffff; --bg-sidebar: rgba(248, 250, 252, 0.98); --border-main: rgba(59, 130, 246, 0.3); --border-subtle: rgba(148, 163, 184, 0.25); --text-main: #1e293b; --text-dim: #475569; --text-muted: #64748b; --text-head: #0f172a; --accent: #2563eb; --accent-light: #3b82f6; --success: #16a34a; --danger: #dc2626; --danger-bg: rgba(239, 68, 68, 0.1); --btn-bg: rgba(148, 163, 184, 0.25); --toggle-bg: rgba(148, 163, 184, 0.4); --modal-bg: #ffffff; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); min-height: 100vh; color: var(--text-main); transition: all 0.3s; }
-    .app { min-height: 100vh; display: flex; flex-direction: column; }
-    .header { background: var(--bg-header); border-bottom: 1px solid var(--border-main); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; }
-    .header-left { display: flex; align-items: center; gap: 1.5rem; }
-    .company-logo { height: 28px; }
-    .logo-divider { width: 1px; height: 32px; background: var(--border-subtle); }
-    .logo { display: flex; align-items: center; gap: 0.5rem; }
-    .logo-icon { font-size: 1.5rem; color: var(--accent); }
-    .logo-text { font-size: 1.25rem; color: var(--accent); font-weight: 700; letter-spacing: 0.1em; }
-    .logo-suffix { font-size: 1rem; color: var(--text-dim); margin-left: 0.25rem; }
-    .header h1 { font-size: 1.25rem; font-weight: 500; margin-left: 1.5rem; color: var(--text-main); }
-    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
-    .theme-toggle { background: var(--btn-bg); border: 1px solid var(--border-subtle); border-radius: 0.5rem; padding: 0.5rem; cursor: pointer; font-size: 1.125rem; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .theme-toggle:hover { border-color: var(--accent); }
-    .btn { padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s; }
-    .btn-primary { background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color: white; }
-    .btn-primary:hover { filter: brightness(1.1); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-secondary { background: var(--btn-bg); color: var(--text-main); border: 1px solid var(--border-subtle); }
-    .btn-secondary:hover { border-color: var(--accent); }
-    .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .main { display: flex; flex: 1; overflow: hidden; }
-    .sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border-main); padding: 1.5rem 0; transition: all 0.3s; }
-    .step-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1.5rem; background: transparent; border: none; color: var(--text-dim); cursor: pointer; text-align: left; transition: all 0.2s; width: 100%; }
-    .step-item:hover { background: rgba(59, 130, 246, 0.1); }
-    .step-item.active { background: rgba(59, 130, 246, 0.15); color: var(--text-main); border-left: 3px solid var(--accent); }
-    .step-num { width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; }
-    .step-item.active .step-num { background: var(--accent); color: white; }
-    .content { flex: 1; padding: 2rem; overflow-y: auto; }
-    .step-container { max-width: 900px; margin: 0 auto; }
-    .step-header { margin-bottom: 2rem; }
-    .step-header h2 { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-head); }
-    .step-header p { color: var(--text-dim); }
-    .form-section { background: var(--bg-card); border: 1px solid var(--border-main); border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; transition: all 0.3s; }
-    .form-section h3 { font-size: 1.125rem; margin-bottom: 1rem; color: var(--text-main); border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem; }
-    .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; margin-bottom: 0.375rem; font-size: 0.875rem; font-weight: 500; color: var(--text-dim); }
-    .form-group input, .form-group select { width: 100%; padding: 0.625rem; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 0.5rem; color: var(--text-main); font-size: 0.875rem; transition: all 0.2s; }
-    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
-    .form-group input:disabled { opacity: 0.5; }
-    .form-help { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
-    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
-    .toggle-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; color: var(--text-main); }
-    .toggle-label input { display: none; }
-    .toggle-switch { width: 44px; height: 24px; background: var(--toggle-bg); border-radius: 12px; position: relative; transition: all 0.2s; }
-    .toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-    .toggle-label input:checked + .toggle-switch { background: var(--accent); }
-    .toggle-label input:checked + .toggle-switch::after { left: 23px; }
-    .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
-    .template-card { background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 0.75rem; padding: 1.5rem; cursor: pointer; transition: all 0.2s; text-align: left; }
-    .template-card:hover { border-color: var(--accent); }
-    .template-card.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.08); }
-    .template-icon { font-size: 2rem; }
-    .template-card h3 { color: var(--text-head); margin: 0.5rem 0; }
-    .template-card p { font-size: 0.875rem; color: var(--text-dim); }
-    .template-check { color: var(--success); font-weight: 600; margin-top: 0.5rem; display: block; }
-    .template-header { display: flex; align-items: center; justify-content: space-between; }
-    .input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-    .input-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 0.75rem; overflow: hidden; transition: all 0.3s; }
-    .input-card.enabled { border-color: var(--accent); }
-    .input-card-header { padding: 0.75rem 1rem; background: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
-    .input-card-body { padding: 1rem; }
-    .channel-badge { font-size: 0.75rem; padding: 0.25rem 0.5rem; background: rgba(59, 130, 246, 0.15); color: var(--accent-light); border-radius: 0.25rem; font-weight: 500; }
-    .pump-badge { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: var(--success); padding: 0.5rem; border-radius: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; }
-    .locked-badge { background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.75rem; font-size: 0.875rem; }
-    .input-card.locked { border-color: rgba(251, 191, 36, 0.5); opacity: 0.85; }
-    .input-card.locked .input-card-header { background: rgba(251, 191, 36, 0.1); }
-    .info-banner { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: var(--accent-light); padding: 0.75rem 1rem; border-radius: 0.5rem; margin-top: 1rem; font-size: 0.875rem; }
-    .nav-buttons { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0; margin-top: 2rem; border-top: 1px solid var(--border-subtle); }
-    .step-indicator { color: var(--text-muted); }
-    .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .summary-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 0.75rem; padding: 1rem; }
-    .summary-card h4 { color: var(--accent-light); margin-bottom: 0.5rem; font-size: 0.875rem; }
-    .summary-card p { color: var(--text-dim); font-size: 0.875rem; }
-    .summary-card ul { list-style: none; font-size: 0.8125rem; color: var(--text-dim); }
-    .summary-card li { margin-bottom: 0.25rem; }
-    .validation-errors { background: var(--danger-bg); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.5rem; }
-    .validation-errors h4 { color: var(--danger); margin-bottom: 0.5rem; }
-    .validation-errors ul { padding-left: 1.25rem; color: var(--danger); }
-    .generate-btn { text-align: center; margin-top: 2rem; }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal { background: var(--modal-bg); border: 1px solid var(--border-main); border-radius: 0.75rem; max-width: 800px; width: 90%; max-height: 85vh; display: flex; flex-direction: column; }
-    .modal-header { padding: 1rem 1.5rem; background: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); }
-    .modal-header h3, .modal-header h4 { color: var(--text-head); }
-    .modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
-    .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; color: var(--text-dim); font-size: 0.875rem; line-height: 1.6; }
-    .modal-body strong { color: var(--accent-light); }
-    .modal-footer { padding: 1rem 1.5rem; background: rgba(0,0,0,0.05); display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-subtle); }
-    .config-preview { background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 0.5rem; padding: 1rem; font-family: monospace; font-size: 0.75rem; color: var(--text-dim); max-height: 300px; overflow: auto; white-space: pre; margin: 1rem 0; }
-    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-    .tab { padding: 0.5rem 1rem; background: var(--btn-bg); border: none; border-radius: 0.5rem 0.5rem 0 0; color: var(--text-dim); cursor: pointer; }
-    .tab.active { background: rgba(59, 130, 246, 0.15); color: var(--accent-light); }
-    .help-icon { width: 20px; height: 20px; border-radius: 50%; background: rgba(59, 130, 246, 0.2); color: var(--accent-light); border: none; cursor: pointer; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
-    .help-icon:hover { background: rgba(59, 130, 246, 0.4); }
-    .footer { background: var(--bg-header); border-top: 1px solid var(--border-main); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-    .footer-left { display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.8125rem; }
-    .footer-logo { height: 20px; opacity: 0.7; }
-    .footer-right { color: var(--text-muted); font-size: 0.75rem; }
-    .chain-flow { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(0,0,0,0.15); border-radius: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-    .chain-step { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--bg-input); border-radius: 0.375rem; font-size: 0.8125rem; }
-    .chain-step.active { background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent); }
-    .chain-step.inactive { opacity: 0.5; }
-    .chain-arrow { color: var(--text-muted); font-size: 1rem; }
-    .chain-icon { font-size: 1rem; }
-    .dout-link-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
-    .dout-link-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: var(--success); border-radius: 0.5rem; font-size: 0.8125rem; margin-top: 0.5rem; }
+    :root {
+      --bg-body: linear-gradient(135deg, #0a1628 0%, #1a2744 100%);
+      --bg-header: rgba(15, 23, 42, 0.95);
+      --bg-card: rgba(30, 41, 59, 0.5);
+      --bg-input: rgba(15, 23, 42, 0.8);
+      --bg-sidebar: rgba(15, 23, 42, 0.8);
+      --border-main: rgba(59, 130, 246, 0.3);
+      --border-subtle: rgba(148, 163, 184, 0.2);
+      --text-main: #e2e8f0;
+      --text-dim: #94a3b8;
+      --text-muted: #64748b;
+      --text-head: #f1f5f9;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --success: #22c55e;
+      --danger: #fca5a5;
+      --danger-bg: rgba(239, 68, 68, 0.2);
+      --btn-bg: rgba(71, 85, 105, 0.5);
+      --toggle-bg: rgba(71, 85, 105, 0.5);
+      --modal-bg: #1e293b;
+    }
+
+    [data-theme="light"] {
+      --bg-body: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      --bg-header: rgba(255, 255, 255, 0.98);
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --bg-input: #ffffff;
+      --bg-sidebar: rgba(248, 250, 252, 0.98);
+      --border-main: rgba(59, 130, 246, 0.3);
+      --border-subtle: rgba(148, 163, 184, 0.25);
+      --text-main: #1e293b;
+      --text-dim: #475569;
+      --text-muted: #64748b;
+      --text-head: #0f172a;
+      --accent: #2563eb;
+      --accent-light: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --danger-bg: rgba(239, 68, 68, 0.1);
+      --btn-bg: rgba(148, 163, 184, 0.25);
+      --toggle-bg: rgba(148, 163, 184, 0.4);
+      --modal-bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-body);
+      min-height: 100vh;
+      color: var(--text-main);
+      transition: all 0.3s;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border-main);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .company-logo {
+      height: 28px;
+    }
+
+    .logo-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border-subtle);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon {
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+
+    .logo-text {
+      font-size: 1.25rem;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .logo-suffix {
+      font-size: 1.25rem;
+      color: var(--accent);
+      font-weight: 700;
+      margin-left: 0.25rem;
+    }
+
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-left: 1.5rem;
+      color: var(--text-main);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .theme-toggle {
+      background: var(--btn-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      font-size: 1.125rem;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--btn-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-main);
+      padding: 1.5rem 0;
+      transition: all 0.3s;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .step-item:hover {
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .step-item.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--text-main);
+      border-left: 3px solid var(--accent);
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(59, 130, 246, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .step-item.active .step-num {
+      background: var(--accent);
+      color: white;
+    }
+
+    .content {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .step-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .step-header {
+      margin-bottom: 2rem;
+    }
+
+    .step-header h2 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-head);
+    }
+
+    .step-header p {
+      color: var(--text-dim);
+    }
+
+    .form-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s;
+    }
+
+    .form-section h3 {
+      font-size: 1.125rem;
+      margin-bottom: 1rem;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-dim);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.625rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.5rem;
+      color: var(--text-main);
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .form-group input:disabled {
+      opacity: 0.5;
+    }
+
+    .form-help {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      color: var(--text-main);
+    }
+
+    .toggle-label input {
+      display: none;
+    }
+
+    .toggle-switch {
+      width: 44px;
+      height: 24px;
+      background: var(--toggle-bg);
+      border-radius: 12px;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-label input:checked+.toggle-switch {
+      background: var(--accent);
+    }
+
+    .toggle-label input:checked+.toggle-switch::after {
+      left: 23px;
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    .template-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-subtle);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .template-card:hover {
+      border-color: var(--accent);
+    }
+
+    .template-card.selected {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .template-icon {
+      font-size: 2rem;
+    }
+
+    .template-card h3 {
+      color: var(--text-head);
+      margin: 0.5rem 0;
+    }
+
+    .template-card p {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+    }
+
+    .template-check {
+      color: var(--success);
+      font-weight: 600;
+      margin-top: 0.5rem;
+      display: block;
+    }
+
+    .template-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .input-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .input-card.enabled {
+      border-color: var(--accent);
+    }
+
+    .input-card-header {
+      padding: 0.75rem 1rem;
+      background: rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .input-card-body {
+      padding: 1rem;
+    }
+
+    .channel-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-light);
+      border-radius: 0.25rem;
+      font-weight: 500;
+    }
+
+    .pump-badge {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--success);
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .locked-badge {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: #fbbf24;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .input-card.locked {
+      border-color: rgba(251, 191, 36, 0.5);
+      opacity: 0.85;
+    }
+
+    .input-card.locked .input-card-header {
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .info-banner {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: var(--accent-light);
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 0;
+      margin-top: 2rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .step-indicator {
+      color: var(--text-muted);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+
+    .summary-card h4 {
+      color: var(--accent-light);
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .summary-card p {
+      color: var(--text-dim);
+      font-size: 0.875rem;
+    }
+
+    .summary-card ul {
+      list-style: none;
+      font-size: 0.8125rem;
+      color: var(--text-dim);
+    }
+
+    .summary-card li {
+      margin-bottom: 0.25rem;
+    }
+
+    .validation-errors {
+      background: var(--danger-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .validation-errors h4 {
+      color: var(--danger);
+      margin-bottom: 0.5rem;
+    }
+
+    .validation-errors ul {
+      padding-left: 1.25rem;
+      color: var(--danger);
+    }
+
+    .generate-btn {
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: var(--modal-bg);
+      border: 1px solid var(--border-main);
+      border-radius: 0.75rem;
+      max-width: 800px;
+      width: 90%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 1rem 1.5rem;
+      background: rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .modal-header h3,
+    .modal-header h4 {
+      color: var(--text-head);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .modal-body strong {
+      color: var(--accent-light);
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      background: rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .config-preview {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      max-height: 300px;
+      overflow: auto;
+      white-space: pre;
+      margin: 1rem 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      background: var(--btn-bg);
+      border: none;
+      border-radius: 0.5rem 0.5rem 0 0;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-light);
+    }
+
+    .help-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-light);
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .help-icon:hover {
+      background: rgba(59, 130, 246, 0.4);
+    }
+
+    .footer {
+      background: var(--bg-header);
+      border-top: 1px solid var(--border-main);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+    }
+
+    .footer-logo {
+      height: 20px;
+      opacity: 0.7;
+    }
+
+    .footer-right {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .chain-flow {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .chain-step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-input);
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+    }
+
+    .chain-step.active {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid var(--accent);
+    }
+
+    .chain-step.inactive {
+      opacity: 0.5;
+    }
+
+    .chain-arrow {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .chain-icon {
+      font-size: 1rem;
+    }
+
+    .dout-link-section {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .dout-link-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--success);
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
+
 <body>
   <div id="root"></div>
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    const TIMEZONES = [{id:0,name:'GMT',offset:'0:00'},{id:1,name:'Atlantic',offset:'-4:00'},{id:2,name:'Eastern',offset:'-5:00'},{id:3,name:'Central',offset:'-6:00'},{id:4,name:'Mountain',offset:'-7:00'},{id:5,name:'Pacific',offset:'-8:00'},{id:6,name:'Alaska',offset:'-9:00'},{id:7,name:'Hawaii',offset:'-10:00'}];
-    const SENSOR_PRESETS = {'level_psi_0-15':{name:'Submersible 0-15 PSI',inputType:2,zeroScale:0,fullScale:34.6,units:'ft',precision:1,category:'level'},'level_psi_0-30':{name:'Submersible 0-30 PSI',inputType:2,zeroScale:0,fullScale:69.2,units:'ft',precision:1,category:'level'},'flow_mag_0-500gpm':{name:'Mag Meter 0-500 GPM',inputType:2,zeroScale:0,fullScale:500,units:'gpm',precision:1,category:'flow',totalizerConversion:60},'flow_mag_0-1000gpm':{name:'Mag Meter 0-1000 GPM',inputType:2,zeroScale:0,fullScale:1000,units:'gpm',precision:0,category:'flow',totalizerConversion:60},'pressure_0-100psi':{name:'Pressure 0-100 PSI',inputType:2,zeroScale:0,fullScale:100,units:'psi',precision:1,category:'pressure'},'custom':{name:'Custom',inputType:2,zeroScale:0,fullScale:100,units:'units',precision:1,category:'custom'}};
-    const INPUT_TYPES = [{id:0,name:'None'},{id:1,name:'0-20mA'},{id:2,name:'4-20mA'},{id:3,name:'0-5V'},{id:4,name:'1-5V'},{id:5,name:'+/-600ACV'},{id:6,name:'+/-5AAC'}];
-    const DI_TYPES = [{id:'status',name:'General Status',labels:['Off','On']},{id:'pump_run',name:'Pump Run',labels:['Stopped','Running']},{id:'fault',name:'Fault/Alarm',labels:['Normal','Fault']},{id:'float_high',name:'High Float',labels:['Normal','High']},{id:'float_low',name:'Low Float',labels:['Normal','Low']}];
+    const TIMEZONES = [{ id: 0, name: 'GMT', offset: '0:00' }, { id: 1, name: 'Atlantic', offset: '-4:00' }, { id: 2, name: 'Eastern', offset: '-5:00' }, { id: 3, name: 'Central', offset: '-6:00' }, { id: 4, name: 'Mountain', offset: '-7:00' }, { id: 5, name: 'Pacific', offset: '-8:00' }, { id: 6, name: 'Alaska', offset: '-9:00' }, { id: 7, name: 'Hawaii', offset: '-10:00' }];
+    const SENSOR_PRESETS = { 'level_psi_0-15': { name: 'Submersible 0-15 PSI', inputType: 2, zeroScale: 0, fullScale: 34.6, units: 'ft', precision: 1, category: 'level' }, 'level_psi_0-30': { name: 'Submersible 0-30 PSI', inputType: 2, zeroScale: 0, fullScale: 69.2, units: 'ft', precision: 1, category: 'level' }, 'flow_mag_0-500gpm': { name: 'Mag Meter 0-500 GPM', inputType: 2, zeroScale: 0, fullScale: 500, units: 'gpm', precision: 1, category: 'flow', totalizerConversion: 60 }, 'flow_mag_0-1000gpm': { name: 'Mag Meter 0-1000 GPM', inputType: 2, zeroScale: 0, fullScale: 1000, units: 'gpm', precision: 0, category: 'flow', totalizerConversion: 60 }, 'pressure_0-100psi': { name: 'Pressure 0-100 PSI', inputType: 2, zeroScale: 0, fullScale: 100, units: 'psi', precision: 1, category: 'pressure' }, 'custom': { name: 'Custom', inputType: 2, zeroScale: 0, fullScale: 100, units: 'units', precision: 1, category: 'custom' } };
+    const INPUT_TYPES = [{ id: 0, name: 'None' }, { id: 1, name: '0-20mA' }, { id: 2, name: '4-20mA' }, { id: 3, name: '0-5V' }, { id: 4, name: '1-5V' }, { id: 5, name: '+/-600ACV' }, { id: 6, name: '+/-5AAC' }];
+    const DI_TYPES = [{ id: 'status', name: 'General Status', labels: ['Off', 'On'] }, { id: 'pump_run', name: 'Pump Run', labels: ['Stopped', 'Running'] }, { id: 'fault', name: 'Fault/Alarm', labels: ['Normal', 'Fault'] }, { id: 'float_high', name: 'High Float', labels: ['Normal', 'High'] }, { id: 'float_low', name: 'Low Float', labels: ['Normal', 'Low'] }];
     const TEMPLATES = [
-      {id:'lift_station',name:'Lift Station',desc:'Lift Station with Duplex Pump Control',icon:'🏭',help:'<strong>Lift Station Configuration</strong><br><br>A duplex pump station for wastewater collection.<br><br><strong>Digital Inputs:</strong><br>• DI1: Pump 1 Run status<br>• DI2: Pump 2 Run status<br>Both enable pump run tracking.<br><br><strong>Analog Inputs:</strong><br>• AI1: Wet Well Level (0-15 PSI = 0-34.6 ft)<br><br><strong>Pump Control:</strong> Enabled',defaults:{di:[{name:'Pump 1 Run',type:'pump_run'},{name:'Pump 2 Run',type:'pump_run'}],ai:[{name:'Wet Well Level',preset:'level_psi_0-15'}],pumpCtrl:true}},
-      {id:'well_station',name:'Well Station',desc:'Pump with flow meter',icon:'💧',help:'<strong>Well Station Configuration</strong><br><br>Groundwater pumping with flow measurement.<br><br><strong>Digital Inputs:</strong><br>• DI1: Well Pump Run with tracking<br><br><strong>Analog Inputs:</strong><br>• AI1: Flow Rate (0-500 GPM) with totalizer<br><br><strong>Pump Control:</strong> Disabled',defaults:{di:[{name:'Well Pump',type:'pump_run'}],ai:[{name:'Flow Rate',preset:'flow_mag_0-500gpm',totalizer:true}],pumpCtrl:false}},
-      {id:'tank',name:'Tank Monitor',desc:'Level monitoring',icon:'🛢️',help:'<strong>Tank Monitor Configuration</strong><br><br>Storage tank level monitoring.<br><br><strong>Digital Inputs:</strong> None<br><br><strong>Analog Inputs:</strong><br>• AI1: Tank Level (0-30 PSI = 0-69.2 ft)<br><br><strong>Pump Control:</strong> Disabled',defaults:{di:[],ai:[{name:'Tank Level',preset:'level_psi_0-30'}],pumpCtrl:false}},
-      {id:'custom',name:'Custom',desc:'Start from scratch',icon:'⚙️',help:'<strong>Custom Configuration</strong><br><br>Blank configuration for unique applications.',defaults:{di:[],ai:[],pumpCtrl:false}}
+      { id: 'lift_station', name: 'Lift Station', desc: 'Lift Station with Duplex Pump Control', icon: '🏭', help: '<strong>Lift Station Configuration</strong><br><br>A duplex pump station for wastewater collection.<br><br><strong>Digital Inputs:</strong><br>• DI1: Pump 1 Run status<br>• DI2: Pump 2 Run status<br>Both enable pump run tracking.<br><br><strong>Analog Inputs:</strong><br>• AI1: Wet Well Level (0-15 PSI = 0-34.6 ft)<br><br><strong>Pump Control:</strong> Enabled', defaults: { di: [{ name: 'Pump 1 Run', type: 'pump_run' }, { name: 'Pump 2 Run', type: 'pump_run' }], ai: [{ name: 'Wet Well Level', preset: 'level_psi_0-15' }], pumpCtrl: true } },
+      { id: 'well_station', name: 'Well Station', desc: 'Pump with flow meter', icon: '💧', help: '<strong>Well Station Configuration</strong><br><br>Groundwater pumping with flow measurement.<br><br><strong>Digital Inputs:</strong><br>• DI1: Well Pump Run with tracking<br><br><strong>Analog Inputs:</strong><br>• AI1: Flow Rate (0-500 GPM) with totalizer<br><br><strong>Pump Control:</strong> Disabled', defaults: { di: [{ name: 'Well Pump', type: 'pump_run' }], ai: [{ name: 'Flow Rate', preset: 'flow_mag_0-500gpm', totalizer: true }], pumpCtrl: false } },
+      { id: 'tank', name: 'Tank Monitor', desc: 'Level monitoring', icon: '🛢️', help: '<strong>Tank Monitor Configuration</strong><br><br>Storage tank level monitoring.<br><br><strong>Digital Inputs:</strong> None<br><br><strong>Analog Inputs:</strong><br>• AI1: Tank Level (0-30 PSI = 0-69.2 ft)<br><br><strong>Pump Control:</strong> Disabled', defaults: { di: [], ai: [{ name: 'Tank Level', preset: 'level_psi_0-30' }], pumpCtrl: false } },
+      { id: 'custom', name: 'Custom', desc: 'Start from scratch', icon: '⚙️', help: '<strong>Custom Configuration</strong><br><br>Blank configuration for unique applications.', defaults: { di: [], ai: [], pumpCtrl: false } }
     ];
     const STORAGE_KEY = 'aquavx_wizard', THEME_KEY = 'aquavx_theme';
 
     const getDefault = () => ({
-      site:{name:'Site Name',timezone:2,dstOffset:0,modbusId:126},template:null,
-      di:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DI${i+1}`,type:'status',lbl0:'Off',lbl1:'On',isPump:false,normalState:0,delta:0.5,debounce:5,scroll:2})),
-      ai:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`AI${i+1}`,inputType:2,preset:'custom',zero:0,full:100,units:'units',prec:1,damp:0.5,delta:1,debounce:5,scroll:4,totalizer:false,totConv:60,minFlow:0})),
-      pumpCtrl:{on:false,mode:1,levelSrc:0,p1:0,p2:0,leadOn:10,lagOn:12,allOff:5,debounce:5,startDly:3},
-      alarms:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Alarm${i+1}`,srcCh:0,srcType:'',alarmType:0,delay:0,alarmState:1,limitType:0,limit:0,hysteresis:0,popup:true,linkedDout:0,doutAction:'activate'})),
-      push:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Push${i+1}`,mode:0,srcCh:0,delta:1,debounce:5,peerImei:'',units:'units'})),
-      reporting:{rate:5,eodRate:1440},
-      dout:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DO${i+1}`,srcReg:0,srcActiveState:1,outActiveSrc:1,outNotActiveSrc:0,duration:0})),
-      originalLines:[] // Stores lines from imported config that wizard doesn't handle
+      site: { name: 'Site Name', timezone: 2, dstOffset: 0, modbusId: 126 }, template: null,
+      di: Array(10).fill(0).map((_, i) => ({ idx: i + 1, on: false, name: `DI${i + 1}`, type: 'status', lbl0: 'Off', lbl1: 'On', isPump: false, normalState: 0, delta: 0.5, debounce: 5, scroll: 2 })),
+      ai: Array(5).fill(0).map((_, i) => ({ idx: i + 1, on: false, name: `AI${i + 1}`, inputType: 2, preset: 'custom', zero: 0, full: 100, units: 'units', prec: 1, damp: 0.5, delta: 1, debounce: 5, scroll: 4, totalizer: false, totConv: 60, minFlow: 0 })),
+      pumpCtrl: { on: false, mode: 1, levelSrc: 0, p1: 0, p2: 0, leadOn: 10, lagOn: 12, allOff: 5, debounce: 5, startDly: 3 },
+      alarms: Array(10).fill(0).map((_, i) => ({ idx: i + 1, on: false, name: `Alarm${i + 1}`, srcCh: 0, srcType: '', alarmType: 0, delay: 0, alarmState: 1, limitType: 0, limit: 0, hysteresis: 0, popup: true, linkedDout: 0, doutAction: 'activate' })),
+      push: Array(10).fill(0).map((_, i) => ({ idx: i + 1, on: false, name: `Push${i + 1}`, mode: 0, srcCh: 0, delta: 1, debounce: 5, peerImei: '', units: 'units' })),
+      reporting: { rate: 5, eodRate: 1440 },
+      dout: Array(5).fill(0).map((_, i) => ({ idx: i + 1, on: false, name: `DO${i + 1}`, srcReg: 0, srcActiveState: 1, outActiveSrc: 1, outNotActiveSrc: 0, duration: 0 })),
+      originalLines: [] // Stores lines from imported config that wizard doesn't handle
     });
 
     function App() {
@@ -157,29 +827,29 @@
 
       useEffect(() => { const t = localStorage.getItem(THEME_KEY) || 'dark'; setTheme(t); document.documentElement.setAttribute('data-theme', t); }, []);
       const toggleTheme = () => { const t = theme === 'dark' ? 'light' : 'dark'; setTheme(t); document.documentElement.setAttribute('data-theme', t); localStorage.setItem(THEME_KEY, t); };
-      useEffect(() => { const s = localStorage.getItem(STORAGE_KEY); if (s) try { setCfg(p => ({...p, ...JSON.parse(s)})); } catch(e) {} }, []);
+      useEffect(() => { const s = localStorage.getItem(STORAGE_KEY); if (s) try { setCfg(p => ({ ...p, ...JSON.parse(s) })); } catch (e) { } }, []);
       useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); }, [cfg]);
 
-      const update = (sec, data) => setCfg(p => ({...p, [sec]: typeof data === 'function' ? data(p[sec]) : {...p[sec], ...data}}));
-      const updateArr = (sec, idx, data) => setCfg(p => ({...p, [sec]: p[sec].map((x, i) => i === idx ? {...x, ...data} : x)}));
+      const update = (sec, data) => setCfg(p => ({ ...p, [sec]: typeof data === 'function' ? data(p[sec]) : { ...p[sec], ...data } }));
+      const updateArr = (sec, idx, data) => setCfg(p => ({ ...p, [sec]: p[sec].map((x, i) => i === idx ? { ...x, ...data } : x) }));
 
       const applyTemplate = (id) => {
         const t = TEMPLATES.find(x => x.id === id); if (!t) return;
         setCfg(p => {
-          const n = {...p, template: id, di: getDefault().di, ai: getDefault().ai};
-          t.defaults.di.forEach((d, i) => { if (i < 10) { const dt = DI_TYPES.find(x => x.id === d.type); n.di[i] = {...n.di[i], on: true, name: d.name, type: d.type, lbl0: dt?.labels[0] || 'Off', lbl1: dt?.labels[1] || 'On', isPump: d.type === 'pump_run', normalState: 0}; }});
-          t.defaults.ai.forEach((a, i) => { if (i < 5) { const pr = SENSOR_PRESETS[a.preset] || SENSOR_PRESETS.custom; n.ai[i] = {...n.ai[i], on: true, name: a.name, preset: a.preset, inputType: pr.inputType, zero: pr.zeroScale, full: pr.fullScale, units: pr.units, prec: pr.precision, totalizer: a.totalizer || false, totConv: pr.totalizerConversion || 60}; }});
+          const n = { ...p, template: id, di: getDefault().di, ai: getDefault().ai };
+          t.defaults.di.forEach((d, i) => { if (i < 10) { const dt = DI_TYPES.find(x => x.id === d.type); n.di[i] = { ...n.di[i], on: true, name: d.name, type: d.type, lbl0: dt?.labels[0] || 'Off', lbl1: dt?.labels[1] || 'On', isPump: d.type === 'pump_run', normalState: 0 }; } });
+          t.defaults.ai.forEach((a, i) => { if (i < 5) { const pr = SENSOR_PRESETS[a.preset] || SENSOR_PRESETS.custom; n.ai[i] = { ...n.ai[i], on: true, name: a.name, preset: a.preset, inputType: pr.inputType, zero: pr.zeroScale, full: pr.fullScale, units: pr.units, prec: pr.precision, totalizer: a.totalizer || false, totConv: pr.totalizerConversion || 60 }; } });
           n.pumpCtrl.on = t.defaults.pumpCtrl; return n;
         });
       };
-      const reset = () => { if(confirm('Reset all?')) { setCfg(getDefault()); setStep(0); localStorage.removeItem(STORAGE_KEY); }};
+      const reset = () => { if (confirm('Reset all?')) { setCfg(getDefault()); setStep(0); localStorage.removeItem(STORAGE_KEY); } };
 
       const parseConfigFile = (text) => {
         // Split by any combination of CR and LF to handle various line ending formats
         const rawLines = text.split(/\r\n|\r|\n/);
         const newCfg = getDefault();
         const originalLines = [];
-        
+
         // Line types and indices that the wizard handles (will be regenerated)
         const isWizardHandled = (lineType, idx, ch) => {
           // Line 1: Site config
@@ -193,10 +863,10 @@
             // DI channels 21-30, AI channels 51-55, DO channels 71-75
             // Totalizer 44-48, P2P receive 95-99
             // Pump stats 11-18 (pump ctrl) or 31-40 (pump tracking)
-            if ((idx >= 21 && idx <= 30) || (idx >= 51 && idx <= 55) || 
-                (idx >= 71 && idx <= 75) || (idx >= 44 && idx <= 48) ||
-                (idx >= 95 && idx <= 99) || (idx >= 11 && idx <= 18) ||
-                (idx >= 31 && idx <= 40)) return true;
+            if ((idx >= 21 && idx <= 30) || (idx >= 51 && idx <= 55) ||
+              (idx >= 71 && idx <= 75) || (idx >= 44 && idx <= 48) ||
+              (idx >= 95 && idx <= 99) || (idx >= 11 && idx <= 18) ||
+              (idx >= 31 && idx <= 40)) return true;
           }
           // Line 11: Analog inputs 1-5
           if (lineType === 11 && idx >= 1 && idx <= 5) return true;
@@ -216,7 +886,7 @@
           if (lineType === 39 && idx === 1) return true;
           return false;
         };
-        
+
         // Helper to parse line into key-value pairs
         const parseLine = (line) => {
           const parts = line.split(',');
@@ -230,23 +900,23 @@
           }
           return result;
         };
-        
+
         // Process each line
         rawLines.forEach((rawLine, lineNum) => {
           const line = rawLine.trim();
-          
+
           // Skip empty lines but preserve them in original
           if (!line) {
             originalLines.push({ type: 'empty', raw: rawLine, order: lineNum });
             return;
           }
-          
+
           // Preserve comment lines
           if (line.startsWith('//')) {
             originalLines.push({ type: 'comment', raw: rawLine, order: lineNum });
             return;
           }
-          
+
           // Try to parse as config line
           const parts = line.split(',');
           if (parts.length < 2 || isNaN(+parts[0])) {
@@ -254,15 +924,15 @@
             originalLines.push({ type: 'other', raw: rawLine, order: lineNum });
             return;
           }
-          
+
           const p = parseLine(line);
-          
+
           // Check if wizard handles this line type/index
           if (!isWizardHandled(p.lineType, p.idx)) {
             // Preserve unhandled config lines
             originalLines.push({ type: 'config', lineType: p.lineType, idx: p.idx, raw: rawLine, order: lineNum });
           }
-          
+
           // Parse wizard-handled lines into config state
           // Line 1: Site config
           if (p.lineType === 1) {
@@ -271,19 +941,19 @@
             newCfg.site.dstOffset = p[2] ?? 0;
             newCfg.site.modbusId = p[9] ?? 126;
           }
-          
+
           // Line 7: Reporting
           if (p.lineType === 7) {
             newCfg.reporting.eodRate = p[2] ?? 1440;
             newCfg.reporting.rate = p[3] ?? 15;
           }
-          
+
           // Line 9: Channels (extract DI and AI names/enabled status)
           if (p.lineType === 9) {
             const ch = p.idx;
             const name = p[1] || `Chan ${ch}`;
             const enabled = p[2] === 1;
-            
+
             // DI channels 21-30
             if (ch >= 21 && ch <= 30) {
               const idx = ch - 21;
@@ -299,7 +969,7 @@
                 newCfg.di[idx].isPump = true;
               }
             }
-            
+
             // AI channels 51-55
             if (ch >= 51 && ch <= 55) {
               const idx = ch - 51;
@@ -311,7 +981,7 @@
               newCfg.ai[idx].prec = p[20] ?? 1;
               newCfg.ai[idx].units = p[21] || 'units';
             }
-            
+
             // P2P receive channels 95-99
             if (ch >= 95 && ch <= 99) {
               const pushIdx = ch - 95;
@@ -320,7 +990,7 @@
               }
             }
           }
-          
+
           // Line 11: Analog input details
           if (p.lineType === 11 && p.idx >= 1 && p.idx <= 5) {
             const idx = p.idx - 1;
@@ -333,13 +1003,13 @@
             newCfg.ai[idx].on = true;
             newCfg.ai[idx].preset = 'custom';
           }
-          
+
           // Line 17: Digital input names
           if (p.lineType === 17 && p.idx >= 1 && p.idx <= 10) {
             const idx = p.idx - 1;
             newCfg.di[idx].name = p[1] || newCfg.di[idx].name;
           }
-          
+
           // Line 28: P2P/Push config
           if (p.lineType === 28 && p.idx >= 1 && p.idx <= 10) {
             const idx = p.idx - 1;
@@ -351,7 +1021,7 @@
             newCfg.push[idx].debounce = p[6] ?? 5;
             newCfg.push[idx].peerImei = String(p[7] || '');
           }
-          
+
           // Line 32: Totalizer
           if (p.lineType === 32 && p.idx >= 1 && p.idx <= 5) {
             const srcReg = p[3];
@@ -362,7 +1032,7 @@
               newCfg.ai[aiIdx].minFlow = p[6] ?? 0;
             }
           }
-          
+
           // Line 34: Alarms
           if (p.lineType === 34 && p.idx >= 1 && p.idx <= 10) {
             const idx = p.idx - 1;
@@ -383,7 +1053,7 @@
               newCfg.alarms[idx].srcType = 'analog';
             }
           }
-          
+
           // Line 36: Digital outputs
           if (p.lineType === 36 && p.idx >= 1 && p.idx <= 5) {
             const idx = p.idx - 1;
@@ -394,7 +1064,7 @@
             newCfg.dout[idx].outNotActiveSrc = p[6] ?? 0;
             newCfg.dout[idx].outActiveSrc = p[7] ?? 1;
             newCfg.dout[idx].duration = p[8] ?? 0;
-            
+
             // Check for alarm links
             const srcReg = p[3];
             if (srcReg >= 3501 && srcReg <= 3510) {
@@ -405,7 +1075,7 @@
               }
             }
           }
-          
+
           // Line 39: Pump control
           if (p.lineType === 39) {
             newCfg.pumpCtrl.on = p[1] === 1;
@@ -418,11 +1088,11 @@
             newCfg.pumpCtrl.startDly = p[31] ?? 3;
           }
         });
-        
+
         newCfg.originalLines = originalLines;
         return newCfg;
       };
-      
+
       const loadConfigFile = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -449,7 +1119,7 @@
               return false;
             };
             const preservedCount = newCfg.originalLines?.filter(l => l.type === 'config' && !isWizardManaged(l.lineType, l.idx)).length || 0;
-            const msg = preservedCount > 0 
+            const msg = preservedCount > 0
               ? `Configuration loaded successfully!\n\n${preservedCount} config lines not covered by the wizard will be preserved in the output.`
               : 'Configuration loaded successfully!';
             alert(msg);
@@ -461,7 +1131,7 @@
         e.target.value = ''; // Reset input
       };
 
-      const steps = [{id:'site',title:'Site Basics',icon:'🏢'},{id:'template',title:'Application',icon:'📋'},{id:'di',title:'Digital Inputs',icon:'🔘'},{id:'ai',title:'Analog Inputs',icon:'📈'},{id:'pump',title:'Pump Control',icon:'⚡'},{id:'alarm',title:'Alarms & Outputs',icon:'🚨'},{id:'push',title:'Peer-to-Peer',icon:'📡'},{id:'reporting',title:'Reporting',icon:'📶'},{id:'review',title:'Review',icon:'✅'}];
+      const steps = [{ id: 'site', title: 'Site Basics', icon: '🏢' }, { id: 'template', title: 'Application', icon: '📋' }, { id: 'di', title: 'Digital Inputs', icon: '🔘' }, { id: 'ai', title: 'Analog Inputs', icon: '📈' }, { id: 'pump', title: 'Pump Control', icon: '⚡' }, { id: 'alarm', title: 'Alarms & Outputs', icon: '🚨' }, { id: 'push', title: 'Peer-to-Peer', icon: '📡' }, { id: 'reporting', title: 'Reporting', icon: '📶' }, { id: 'review', title: 'Review', icon: '✅' }];
 
       return (
         <div className="app">
@@ -469,11 +1139,11 @@
             <div className="header-left">
               <img src="https://www.cattron.com/wp-content/uploads/Cattron_Logo_2024_Horizontal_Color_RGB.webp" alt="Cattron" className="company-logo" />
               <div className="logo-divider"></div>
-              <div className="logo"><span className="logo-icon">⚡</span><span className="logo-text">AQUAVX</span><span className="logo-suffix">ProPlus</span></div>
+              <div className="logo"><span className="logo-text">AQUAVX</span><span className="logo-suffix">Pro</span></div>
               <h1>Configuration Wizard</h1>
             </div>
             <div className="header-actions">
-              <input type="file" id="loadConfig" accept=".lfc,.txt,.log" onChange={loadConfigFile} style={{display:'none'}} />
+              <input type="file" id="loadConfig" accept=".lfc,.txt,.log" onChange={loadConfigFile} style={{ display: 'none' }} />
               <button className="btn" onClick={() => document.getElementById('loadConfig').click()} title="Load existing configuration file">📂 Load</button>
               <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☀️' : '🌙'}</button>
               <button className="btn btn-danger" onClick={reset}>🔄 Reset</button>
@@ -492,25 +1162,25 @@
               {step === 7 && <ReportingStep cfg={cfg} update={update} />}
               {step === 8 && <ReviewStep cfg={cfg} setOutput={setOutput} errors={errors} setErrors={setErrors} />}
               <div className="nav-buttons">
-                <button className="btn btn-secondary" onClick={() => setStep(s => Math.max(0, s-1))} disabled={step === 0}>← Previous</button>
+                <button className="btn btn-secondary" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← Previous</button>
                 <span className="step-indicator">Step {step + 1} of {steps.length}</span>
-                <button className="btn btn-primary" onClick={() => setStep(s => Math.min(steps.length-1, s+1))} disabled={step === steps.length-1}>Next →</button>
+                <button className="btn btn-primary" onClick={() => setStep(s => Math.min(steps.length - 1, s + 1))} disabled={step === steps.length - 1}>Next →</button>
               </div>
             </div>
           </div>
           {output && <OutputModal output={output} onClose={() => setOutput(null)} />}
-          <footer className="footer"><div className="footer-left"><img src="https://www.cattron.com/wp-content/uploads/Cattron_Logo_2024_Horizontal_Color_RGB.webp" alt="Cattron" className="footer-logo" /><span>Aquavx ProPlus Configuration Wizard</span></div><div className="footer-right">© {new Date().getFullYear()} Cattron. All rights reserved.</div></footer>
+          <footer className="footer"><div className="footer-left"><img src="https://www.cattron.com/wp-content/uploads/Cattron_Logo_2024_Horizontal_Color_RGB.webp" alt="Cattron" className="footer-logo" /><span>Aquavx Pro Configuration Wizard</span></div><div className="footer-right">© {new Date().getFullYear()} Cattron. All rights reserved.</div></footer>
         </div>
       );
     }
 
     function SiteStep({ cfg, update }) {
-      return (<div className="step-container"><div className="step-header"><h2>Site Basics</h2><p>Configure site identification and settings.</p></div><div className="form-section"><div className="form-group"><label>Site Name</label><input value={cfg.site.name} onChange={e => update('site', {name: e.target.value})} maxLength={31} /></div><div className="form-row"><div className="form-group"><label>Time Zone</label><select value={cfg.site.timezone} onChange={e => update('site', {timezone: +e.target.value})}>{TIMEZONES.map(t => <option key={t.id} value={t.id}>{t.name} (UTC{t.offset})</option>)}</select></div><div className="form-group"><label>Daylight Saving Offset</label><select value={cfg.site.dstOffset} onChange={e => update('site', {dstOffset: +e.target.value})}><option value={0}>None</option><option value={1}>1 hour</option><option value={2}>2 hours</option></select><p className="form-help">DST adjustment when active</p></div><div className="form-group"><label>Modbus Slave ID</label><input type="number" value={cfg.site.modbusId} onChange={e => update('site', {modbusId: +e.target.value || 1})} min={1} max={247} /></div></div></div></div>);
+      return (<div className="step-container"><div className="step-header"><h2>Site Basics</h2><p>Configure site identification and settings.</p></div><div className="form-section"><div className="form-group"><label>Site Name</label><input value={cfg.site.name} onChange={e => update('site', { name: e.target.value })} maxLength={31} /></div><div className="form-row"><div className="form-group"><label>Time Zone</label><select value={cfg.site.timezone} onChange={e => update('site', { timezone: +e.target.value })}>{TIMEZONES.map(t => <option key={t.id} value={t.id}>{t.name} (UTC{t.offset})</option>)}</select></div><div className="form-group"><label>Daylight Saving Offset</label><select value={cfg.site.dstOffset} onChange={e => update('site', { dstOffset: +e.target.value })}><option value={0}>None</option><option value={1}>1 hour</option><option value={2}>2 hours</option></select><p className="form-help">DST adjustment when active</p></div><div className="form-group"><label>Modbus Slave ID</label><input type="number" value={cfg.site.modbusId} onChange={e => update('site', { modbusId: +e.target.value || 1 })} min={1} max={247} /></div></div></div></div>);
     }
 
     function TemplateStep({ cfg, apply }) {
       const [help, setHelp] = useState(null);
-      return (<div className="step-container"><div className="step-header"><h2>Application Type</h2><p>Select a template to pre-configure common settings.</p></div><div className="template-grid">{TEMPLATES.map(t => (<button key={t.id} className={`template-card ${cfg.template === t.id ? 'selected' : ''}`} onClick={() => apply(t.id)}><div className="template-header"><span className="template-icon">{t.icon}</span><button className="help-icon" onClick={(e) => { e.stopPropagation(); setHelp(t.help); }}>?</button></div><h3>{t.name}</h3><p>{t.desc}</p>{cfg.template === t.id && <span className="template-check">✓ Selected</span>}</button>))}</div>{help && <div className="modal-overlay" onClick={() => setHelp(null)}><div className="modal" style={{maxWidth:'500px'}} onClick={e => e.stopPropagation()}><div className="modal-header"><h4>Template Information</h4><button className="modal-close" onClick={() => setHelp(null)}>×</button></div><div className="modal-body" dangerouslySetInnerHTML={{__html: help}} /></div></div>}</div>);
+      return (<div className="step-container"><div className="step-header"><h2>Application Type</h2><p>Select a template to pre-configure common settings.</p></div><div className="template-grid">{TEMPLATES.map(t => (<button key={t.id} className={`template-card ${cfg.template === t.id ? 'selected' : ''}`} onClick={() => apply(t.id)}><div className="template-header"><span className="template-icon">{t.icon}</span><button className="help-icon" onClick={(e) => { e.stopPropagation(); setHelp(t.help); }}>?</button></div><h3>{t.name}</h3><p>{t.desc}</p>{cfg.template === t.id && <span className="template-check">✓ Selected</span>}</button>))}</div>{help && <div className="modal-overlay" onClick={() => setHelp(null)}><div className="modal" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}><div className="modal-header"><h4>Template Information</h4><button className="modal-close" onClick={() => setHelp(null)}>×</button></div><div className="modal-body" dangerouslySetInnerHTML={{ __html: help }} /></div></div>}</div>);
     }
 
     function DIStep({ cfg, updateArr }) {
@@ -521,7 +1191,7 @@
         if (isLockedByPumpCtrl(idx)) return DI_TYPES.filter(t => t.id === 'pump_run');
         return canBePump(idx) ? DI_TYPES : DI_TYPES.filter(t => t.id !== 'pump_run');
       };
-      return (<div className="step-container"><div className="step-header"><h2>Digital Inputs</h2><p>Configure 10 digital inputs (Channels 21-30).</p>{pumpCtrlEnabled && <div className="info-banner">ℹ️ DI1-DI2 are reserved for Pump Control (Pump 1 & 2 Run inputs). Pump stats auto-configured on CH 11-18.</div>}</div><div className="input-grid">{cfg.di.map((d, i) => (<div key={i} className={`input-card ${d.on ? 'enabled' : ''} ${isLockedByPumpCtrl(i) ? 'locked' : ''}`}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={d.on} onChange={e => updateArr('di', i, {on: e.target.checked})} disabled={isLockedByPumpCtrl(i)} /><span className="toggle-switch"></span><span>DI {i+1}</span></label><span className="channel-badge">CH {21+i}</span></div>{d.on && (<div className="input-card-body">{isLockedByPumpCtrl(i) && <div className="locked-badge">🔒 Reserved for Pump Control</div>}<div className="form-group"><label>Name</label><input value={d.name} onChange={e => updateArr('di', i, {name: e.target.value})} disabled={isLockedByPumpCtrl(i)} /></div><div className="form-row"><div className="form-group"><label>Type</label><select value={d.type} onChange={e => { const t = DI_TYPES.find(x => x.id === e.target.value); updateArr('di', i, {type: e.target.value, lbl0: t?.labels[0], lbl1: t?.labels[1], isPump: e.target.value === 'pump_run'}); }} disabled={isLockedByPumpCtrl(i)}>{getAvailableTypes(i).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div><div className="form-group"><label>Normal State</label><select value={d.normalState} onChange={e => updateArr('di', i, {normalState: +e.target.value})} disabled={isLockedByPumpCtrl(i)}><option value={0}>Normally Open</option><option value={1}>Normally Closed</option></select></div></div>{!isLockedByPumpCtrl(i) && (<div className="form-row"><div className="form-group"><label>Off Label (0)</label><input value={d.lbl0} onChange={e => updateArr('di', i, {lbl0: e.target.value})} /></div><div className="form-group"><label>On Label (1)</label><input value={d.lbl1} onChange={e => updateArr('di', i, {lbl1: e.target.value})} /></div></div>)}{d.isPump && !pumpCtrlEnabled && <div className="pump-badge">🔄 Pump Run Tracking Enabled (CH {31 + i*2}, {32 + i*2})</div>}</div>)}</div>))}</div></div>);
+      return (<div className="step-container"><div className="step-header"><h2>Digital Inputs</h2><p>Configure 10 digital inputs (Channels 21-30).</p>{pumpCtrlEnabled && <div className="info-banner">ℹ️ DI1-DI2 are reserved for Pump Control (Pump 1 & 2 Run inputs). Pump stats auto-configured on CH 11-18.</div>}</div><div className="input-grid">{cfg.di.map((d, i) => (<div key={i} className={`input-card ${d.on ? 'enabled' : ''} ${isLockedByPumpCtrl(i) ? 'locked' : ''}`}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={d.on} onChange={e => updateArr('di', i, { on: e.target.checked })} disabled={isLockedByPumpCtrl(i)} /><span className="toggle-switch"></span><span>DI {i + 1}</span></label><span className="channel-badge">CH {21 + i}</span></div>{d.on && (<div className="input-card-body">{isLockedByPumpCtrl(i) && <div className="locked-badge">🔒 Reserved for Pump Control</div>}<div className="form-group"><label>Name</label><input value={d.name} onChange={e => updateArr('di', i, { name: e.target.value })} disabled={isLockedByPumpCtrl(i)} /></div><div className="form-row"><div className="form-group"><label>Type</label><select value={d.type} onChange={e => { const t = DI_TYPES.find(x => x.id === e.target.value); updateArr('di', i, { type: e.target.value, lbl0: t?.labels[0], lbl1: t?.labels[1], isPump: e.target.value === 'pump_run' }); }} disabled={isLockedByPumpCtrl(i)}>{getAvailableTypes(i).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div><div className="form-group"><label>Normal State</label><select value={d.normalState} onChange={e => updateArr('di', i, { normalState: +e.target.value })} disabled={isLockedByPumpCtrl(i)}><option value={0}>Normally Open</option><option value={1}>Normally Closed</option></select></div></div>{!isLockedByPumpCtrl(i) && (<div className="form-row"><div className="form-group"><label>Off Label (0)</label><input value={d.lbl0} onChange={e => updateArr('di', i, { lbl0: e.target.value })} /></div><div className="form-group"><label>On Label (1)</label><input value={d.lbl1} onChange={e => updateArr('di', i, { lbl1: e.target.value })} /></div></div>)}{d.isPump && !pumpCtrlEnabled && <div className="pump-badge">🔄 Pump Run Tracking Enabled (CH {31 + i * 2}, {32 + i * 2})</div>}</div>)}</div>))}</div></div>);
     }
 
     function AIStep({ cfg, updateArr }) {
@@ -536,50 +1206,50 @@
         }
         return null;
       };
-      
-      return (<div className="step-container"><div className="step-header"><h2>Analog Inputs</h2><p>Configure 5 analog inputs (Channels 51-55).</p></div><div className="input-grid">{cfg.ai.map((a, i) => (<div key={i} className={`input-card ${a.on ? 'enabled' : ''}`} style={{gridColumn: a.on ? 'span 2' : 'span 1'}}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={a.on} onChange={e => updateArr('ai', i, {on: e.target.checked})} /><span className="toggle-switch"></span><span>AI {i+1}</span></label><span className="channel-badge">CH {51+i}</span></div>{a.on && (<div className="input-card-body"><div className="form-row"><div className="form-group" style={{gridColumn:'span 2'}}><label>Name</label><input value={a.name} onChange={e => updateArr('ai', i, {name: e.target.value})} /></div><div className="form-group"><label>Preset</label><select value={a.preset} onChange={e => { const p = SENSOR_PRESETS[e.target.value]; updateArr('ai', i, {preset: e.target.value, inputType: p.inputType, zero: p.zeroScale, full: p.fullScale, units: p.units, prec: p.precision, totConv: p.totalizerConversion || 60}); }}>{Object.entries(SENSOR_PRESETS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></div></div>{a.preset === 'custom' && (<div className="form-row"><div className="form-group"><label>Input Type</label><select value={a.inputType} onChange={e => updateArr('ai', i, {inputType: +e.target.value})}>{INPUT_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div></div>)}<div className="form-row"><div className="form-group"><label>Zero Scale</label><input type="number" value={a.zero} onChange={e => updateArr('ai', i, {zero: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Full Scale</label><input type="number" value={a.full} onChange={e => updateArr('ai', i, {full: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Units</label><input value={a.units} onChange={e => updateArr('ai', i, {units: e.target.value})} maxLength={7} /></div><div className="form-group"><label>Precision</label><select value={a.prec} onChange={e => updateArr('ai', i, {prec: +e.target.value})}>{[0,1,2,3].map(p => <option key={p} value={p}>{p} dec</option>)}</select></div></div><div className="form-row"><div className="form-group"><label title="Minimum change in value required to trigger a report.">Delta ⓘ</label><input type="number" value={a.delta} onChange={e => updateArr('ai', i, {delta: +e.target.value})} step="0.1" min="0" /></div><div className="form-group"><label title="Stabilization period in seconds.">Debounce (sec) ⓘ</label><input type="number" value={a.debounce} onChange={e => updateArr('ai', i, {debounce: +e.target.value})} min="0" /></div></div>{SENSOR_PRESETS[a.preset]?.category === 'flow' && (<div style={{marginTop:'1rem',paddingTop:'1rem',borderTop:'1px solid var(--border-subtle)'}}><label className="toggle-label"><input type="checkbox" checked={a.totalizer} onChange={e => updateArr('ai', i, {totalizer: e.target.checked})} /><span className="toggle-switch"></span><span>Enable Totalizer</span></label>{a.totalizer && (<><div className="form-row" style={{marginTop:'0.75rem'}}><div className="form-group"><label>Conversion</label><input type="number" value={a.totConv} onChange={e => updateArr('ai', i, {totConv: +e.target.value})} /><p className="form-help">GPM × factor</p></div><div className="form-group"><label>Min Flow</label><input type="number" value={a.minFlow} onChange={e => updateArr('ai', i, {minFlow: +e.target.value})} /></div></div><div className="pump-badge">📊 Daily Total Output: CH {getTotalizerChannel(i)} (resets at midnight)</div></>)}</div>)}</div>)}</div>))}</div></div>);
+
+      return (<div className="step-container"><div className="step-header"><h2>Analog Inputs</h2><p>Configure 5 analog inputs (Channels 51-55).</p></div><div className="input-grid">{cfg.ai.map((a, i) => (<div key={i} className={`input-card ${a.on ? 'enabled' : ''}`} style={{ gridColumn: a.on ? 'span 2' : 'span 1' }}><div className="input-card-header"><label className="toggle-label"><input type="checkbox" checked={a.on} onChange={e => updateArr('ai', i, { on: e.target.checked })} /><span className="toggle-switch"></span><span>AI {i + 1}</span></label><span className="channel-badge">CH {51 + i}</span></div>{a.on && (<div className="input-card-body"><div className="form-row"><div className="form-group" style={{ gridColumn: 'span 2' }}><label>Name</label><input value={a.name} onChange={e => updateArr('ai', i, { name: e.target.value })} /></div><div className="form-group"><label>Preset</label><select value={a.preset} onChange={e => { const p = SENSOR_PRESETS[e.target.value]; updateArr('ai', i, { preset: e.target.value, inputType: p.inputType, zero: p.zeroScale, full: p.fullScale, units: p.units, prec: p.precision, totConv: p.totalizerConversion || 60 }); }}>{Object.entries(SENSOR_PRESETS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></div></div>{a.preset === 'custom' && (<div className="form-row"><div className="form-group"><label>Input Type</label><select value={a.inputType} onChange={e => updateArr('ai', i, { inputType: +e.target.value })}>{INPUT_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div></div>)}<div className="form-row"><div className="form-group"><label>Zero Scale</label><input type="number" value={a.zero} onChange={e => updateArr('ai', i, { zero: +e.target.value })} step="0.1" /></div><div className="form-group"><label>Full Scale</label><input type="number" value={a.full} onChange={e => updateArr('ai', i, { full: +e.target.value })} step="0.1" /></div><div className="form-group"><label>Units</label><input value={a.units} onChange={e => updateArr('ai', i, { units: e.target.value })} maxLength={7} /></div><div className="form-group"><label>Precision</label><select value={a.prec} onChange={e => updateArr('ai', i, { prec: +e.target.value })}>{[0, 1, 2, 3].map(p => <option key={p} value={p}>{p} dec</option>)}</select></div></div><div className="form-row"><div className="form-group"><label title="Minimum change in value required to trigger a report.">Delta ⓘ</label><input type="number" value={a.delta} onChange={e => updateArr('ai', i, { delta: +e.target.value })} step="0.1" min="0" /></div><div className="form-group"><label title="Stabilization period in seconds.">Debounce (sec) ⓘ</label><input type="number" value={a.debounce} onChange={e => updateArr('ai', i, { debounce: +e.target.value })} min="0" /></div></div>{SENSOR_PRESETS[a.preset]?.category === 'flow' && (<div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}><label className="toggle-label"><input type="checkbox" checked={a.totalizer} onChange={e => updateArr('ai', i, { totalizer: e.target.checked })} /><span className="toggle-switch"></span><span>Enable Totalizer</span></label>{a.totalizer && (<><div className="form-row" style={{ marginTop: '0.75rem' }}><div className="form-group"><label>Conversion</label><input type="number" value={a.totConv} onChange={e => updateArr('ai', i, { totConv: +e.target.value })} /><p className="form-help">GPM × factor</p></div><div className="form-group"><label>Min Flow</label><input type="number" value={a.minFlow} onChange={e => updateArr('ai', i, { minFlow: +e.target.value })} /></div></div><div className="pump-badge">📊 Daily Total Output: CH {getTotalizerChannel(i)} (resets at midnight)</div></>)}</div>)}</div>)}</div>))}</div></div>);
     }
 
     function PumpStep({ cfg, update }) {
-      const aiRegOpts = cfg.ai.filter(a => a.on).map(a => ({reg: 100 + a.idx, name: `Reg ${100+a.idx}: ${a.name} (AI${a.idx})`}));
+      const aiRegOpts = cfg.ai.filter(a => a.on).map(a => ({ reg: 100 + a.idx, name: `Reg ${100 + a.idx}: ${a.name} (AI${a.idx})` }));
       const p2pRegOpts = cfg.push.filter((p, i) => p.on && p.mode === 2 && i < 5).map((p, i) => {
         const pushIdx = cfg.push.indexOf(p);
-        return {reg: 1500 + pushIdx, name: `Reg ${1500+pushIdx}: ${p.name} (P2P Receive)`};
+        return { reg: 1500 + pushIdx, name: `Reg ${1500 + pushIdx}: ${p.name} (P2P Receive)` };
       });
       const levelSrcOpts = [...aiRegOpts, ...p2pRegOpts];
-      return (<div className="step-container"><div className="step-header"><h2>Pump Control</h2><p>Configure duplex pump control.</p></div><div className="form-section"><label className="toggle-label" style={{fontSize:'1.125rem',fontWeight:500}}><input type="checkbox" checked={cfg.pumpCtrl.on} onChange={e => update('pumpCtrl', {on: e.target.checked})} /><span className="toggle-switch"></span><span>Enable Duplex Pump Control</span></label>{cfg.pumpCtrl.on && <div className="info-banner" style={{marginTop:'1rem'}}>ℹ️ DI1-DI2 will be reserved for Pump 1 & 2 Run inputs. DO1-DO2 will be reserved for Pump 1 & 2 Call-to-Start relays. Pump stats auto-configured on CH 11-18.</div>}</div>{cfg.pumpCtrl.on && (<><div className="form-section"><h3>Mode & Level Source</h3><div className="form-row"><div className="form-group"><label>Mode</label><select value={cfg.pumpCtrl.mode} onChange={e => update('pumpCtrl', {mode: +e.target.value})}><option value={0}>Drain (pumps ON when HIGH)</option><option value={1}>Fill (pumps ON when LOW)</option></select></div><div className="form-group"><label title="Select the data register containing the level sensor value.">Level Source Register ⓘ</label><select value={cfg.pumpCtrl.levelSrc} onChange={e => update('pumpCtrl', {levelSrc: +e.target.value})}><option value={0}>-- Select --</option>{levelSrcOpts.map(s => <option key={s.reg} value={s.reg}>{s.name}</option>)}</select></div></div><div className="form-row"><div className="form-group"><label>Pump 1 Run Input</label><input value="DI1 (CH 21) - Auto-configured" disabled style={{opacity:0.7}} /></div><div className="form-group"><label>Pump 2 Run Input</label><input value="DI2 (CH 22) - Auto-configured" disabled style={{opacity:0.7}} /></div></div></div><div className="form-section"><h3>Setpoints</h3><div className="form-row"><div className="form-group"><label>Lead On</label><input type="number" value={cfg.pumpCtrl.leadOn} onChange={e => update('pumpCtrl', {leadOn: +e.target.value})} step="0.1" /></div><div className="form-group"><label>Lag On</label><input type="number" value={cfg.pumpCtrl.lagOn} onChange={e => update('pumpCtrl', {lagOn: +e.target.value})} step="0.1" /></div><div className="form-group"><label>All Off</label><input type="number" value={cfg.pumpCtrl.allOff} onChange={e => update('pumpCtrl', {allOff: +e.target.value})} step="0.1" /></div></div></div><div className="form-section"><h3>Timing</h3><div className="form-row"><div className="form-group"><label>Debounce (sec)</label><input type="number" value={cfg.pumpCtrl.debounce} onChange={e => update('pumpCtrl', {debounce: +e.target.value})} /></div><div className="form-group"><label>Start Delay (sec)</label><input type="number" value={cfg.pumpCtrl.startDly} onChange={e => update('pumpCtrl', {startDly: +e.target.value})} /></div></div></div></>)}</div>);
+      return (<div className="step-container"><div className="step-header"><h2>Pump Control</h2><p>Configure duplex pump control.</p></div><div className="form-section"><label className="toggle-label" style={{ fontSize: '1.125rem', fontWeight: 500 }}><input type="checkbox" checked={cfg.pumpCtrl.on} onChange={e => update('pumpCtrl', { on: e.target.checked })} /><span className="toggle-switch"></span><span>Enable Duplex Pump Control</span></label>{cfg.pumpCtrl.on && <div className="info-banner" style={{ marginTop: '1rem' }}>ℹ️ DI1-DI2 will be reserved for Pump 1 & 2 Run inputs. DO1-DO2 will be reserved for Pump 1 & 2 Call-to-Start relays. Pump stats auto-configured on CH 11-18.</div>}</div>{cfg.pumpCtrl.on && (<><div className="form-section"><h3>Mode & Level Source</h3><div className="form-row"><div className="form-group"><label>Mode</label><select value={cfg.pumpCtrl.mode} onChange={e => update('pumpCtrl', { mode: +e.target.value })}><option value={0}>Drain (pumps ON when HIGH)</option><option value={1}>Fill (pumps ON when LOW)</option></select></div><div className="form-group"><label title="Select the data register containing the level sensor value.">Level Source Register ⓘ</label><select value={cfg.pumpCtrl.levelSrc} onChange={e => update('pumpCtrl', { levelSrc: +e.target.value })}><option value={0}>-- Select --</option>{levelSrcOpts.map(s => <option key={s.reg} value={s.reg}>{s.name}</option>)}</select></div></div><div className="form-row"><div className="form-group"><label>Pump 1 Run Input</label><input value="DI1 (CH 21) - Auto-configured" disabled style={{ opacity: 0.7 }} /></div><div className="form-group"><label>Pump 2 Run Input</label><input value="DI2 (CH 22) - Auto-configured" disabled style={{ opacity: 0.7 }} /></div></div></div><div className="form-section"><h3>Setpoints</h3><div className="form-row"><div className="form-group"><label>Lead On</label><input type="number" value={cfg.pumpCtrl.leadOn} onChange={e => update('pumpCtrl', { leadOn: +e.target.value })} step="0.1" /></div><div className="form-group"><label>Lag On</label><input type="number" value={cfg.pumpCtrl.lagOn} onChange={e => update('pumpCtrl', { lagOn: +e.target.value })} step="0.1" /></div><div className="form-group"><label>All Off</label><input type="number" value={cfg.pumpCtrl.allOff} onChange={e => update('pumpCtrl', { allOff: +e.target.value })} step="0.1" /></div></div></div><div className="form-section"><h3>Timing</h3><div className="form-row"><div className="form-group"><label>Debounce (sec)</label><input type="number" value={cfg.pumpCtrl.debounce} onChange={e => update('pumpCtrl', { debounce: +e.target.value })} /></div><div className="form-group"><label>Start Delay (sec)</label><input type="number" value={cfg.pumpCtrl.startDly} onChange={e => update('pumpCtrl', { startDly: +e.target.value })} /></div></div></div></>)}</div>);
     }
 
     function AlarmStep({ cfg, updateArr }) {
       const pumpCtrlEnabled = cfg.pumpCtrl.on;
-      
+
       // Build source channel options: DI, AI, and P2P Receive
-      const diChOpts = cfg.di.filter(d => d.on).map(d => ({ch: 20+d.idx, name: d.name, type: 'digital'}));
-      const aiChOpts = cfg.ai.filter(a => a.on).map(a => ({ch: 50+a.idx, name: a.name, type: 'analog', prec: a.prec}));
+      const diChOpts = cfg.di.filter(d => d.on).map(d => ({ ch: 20 + d.idx, name: d.name, type: 'digital' }));
+      const aiChOpts = cfg.ai.filter(a => a.on).map(a => ({ ch: 50 + a.idx, name: a.name, type: 'analog', prec: a.prec }));
       const p2pChOpts = cfg.push.filter((p, i) => p.on && p.mode === 2 && i < 5).map((p, i) => {
         const pushIdx = cfg.push.indexOf(p);
-        return {ch: 95 + pushIdx, name: p.name, type: 'analog', prec: 1};
+        return { ch: 95 + pushIdx, name: p.name, type: 'analog', prec: 1 };
       });
       const chOpts = [...diChOpts, ...aiChOpts, ...p2pChOpts];
-      
+
       const getSourceType = (srcCh) => {
         if (srcCh >= 21 && srcCh <= 30) return 'digital';
         if (srcCh >= 51 && srcCh <= 55) return 'analog';
         if (srcCh >= 95 && srcCh <= 99) return 'analog';
         return '';
       };
-      
+
       const getSourceName = (srcCh) => {
         const opt = chOpts.find(c => c.ch === srcCh);
         return opt ? opt.name : `CH${srcCh}`;
       };
-      
+
       // Get available DOUTs (not locked by pump control and not already linked to another alarm)
       const getAvailableDouts = (currentAlarmIdx) => {
         const linkedDouts = cfg.alarms
           .filter((a, i) => a.on && a.linkedDout > 0 && i !== currentAlarmIdx)
           .map(a => a.linkedDout);
-        
+
         const available = [];
         for (let i = 1; i <= 5; i++) {
           const isLockedByPumpCtrl = pumpCtrlEnabled && i <= 2;
@@ -597,24 +1267,24 @@
             <h2>Alarms & Digital Outputs</h2>
             <p>Configure alarms and optionally link them to relay outputs. The chain flows: Source Channel → Alarm → Digital Output (DO).</p>
           </div>
-          
+
           {pumpCtrlEnabled && (
-            <div className="info-banner" style={{marginBottom:'1.5rem'}}>
+            <div className="info-banner" style={{ marginBottom: '1.5rem' }}>
               ℹ️ DO1-DO2 are reserved for Pump Control. Only DO3-DO5 are available for alarm linking.
             </div>
           )}
-          
+
           {cfg.alarms.map((a, i) => (
-            <div key={i} className="form-section" style={{marginBottom:'1rem'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}>
+            <div key={i} className="form-section" style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <label className="toggle-label">
-                  <input type="checkbox" checked={a.on} onChange={e => updateArr('alarms', i, {on: e.target.checked})} />
+                  <input type="checkbox" checked={a.on} onChange={e => updateArr('alarms', i, { on: e.target.checked })} />
                   <span className="toggle-switch"></span>
-                  <span>Alarm {i+1}</span>
+                  <span>Alarm {i + 1}</span>
                 </label>
-                <span className="channel-badge">Reg {3501+i}</span>
+                <span className="channel-badge">Reg {3501 + i}</span>
               </div>
-              
+
               {a.on && (
                 <>
                   {/* Chain Flow Visualization */}
@@ -634,16 +1304,16 @@
                       <span>{a.linkedDout > 0 ? `DO${a.linkedDout} (${a.doutAction})` : 'No Output'}</span>
                     </div>
                   </div>
-                  
+
                   {/* Basic Alarm Settings */}
                   <div className="form-row">
                     <div className="form-group">
                       <label>Name</label>
-                      <input value={a.name} onChange={e => updateArr('alarms', i, {name: e.target.value})} maxLength={31} />
+                      <input value={a.name} onChange={e => updateArr('alarms', i, { name: e.target.value })} maxLength={31} />
                     </div>
                     <div className="form-group">
                       <label>Source Channel</label>
-                      <select value={a.srcCh} onChange={e => { const ch = +e.target.value; updateArr('alarms', i, {srcCh: ch, srcType: getSourceType(ch)}); }}>
+                      <select value={a.srcCh} onChange={e => { const ch = +e.target.value; updateArr('alarms', i, { srcCh: ch, srcType: getSourceType(ch) }); }}>
                         <option value={0}>-- Select --</option>
                         <optgroup label="Digital Inputs">
                           {diChOpts.map(c => <option key={c.ch} value={c.ch}>CH{c.ch}: {c.name}</option>)}
@@ -660,81 +1330,81 @@
                     </div>
                     <div className="form-group">
                       <label title="Standard alarms clear automatically. Latched alarms remain until acknowledged.">Type ⓘ</label>
-                      <select value={a.alarmType} onChange={e => updateArr('alarms', i, {alarmType: +e.target.value})}>
+                      <select value={a.alarmType} onChange={e => updateArr('alarms', i, { alarmType: +e.target.value })}>
                         <option value={0}>Standard</option>
                         <option value={1}>Latched</option>
                       </select>
                     </div>
                   </div>
-                  
+
                   <div className="form-row">
                     <div className="form-group">
                       <label title="Duration source must be in alarm condition before triggering.">Delay (sec) ⓘ</label>
-                      <input type="number" value={a.delay} onChange={e => updateArr('alarms', i, {delay: +e.target.value})} min={0} />
+                      <input type="number" value={a.delay} onChange={e => updateArr('alarms', i, { delay: +e.target.value })} min={0} />
                     </div>
                     <div className="form-group">
                       <label title="Show alarm popup on device display">Display Popup ⓘ</label>
-                      <select value={a.popup ? 1 : 0} onChange={e => updateArr('alarms', i, {popup: +e.target.value === 1})}>
+                      <select value={a.popup ? 1 : 0} onChange={e => updateArr('alarms', i, { popup: +e.target.value === 1 })}>
                         <option value={1}>Enabled</option>
                         <option value={0}>Disabled</option>
                       </select>
                     </div>
                   </div>
-                  
+
                   {/* Digital Source Settings */}
                   {a.srcType === 'digital' && (
                     <div className="form-row">
                       <div className="form-group">
                         <label title="The state of the digital input that triggers the alarm.">Alarm State ⓘ</label>
-                        <select value={a.alarmState} onChange={e => updateArr('alarms', i, {alarmState: +e.target.value})}>
+                        <select value={a.alarmState} onChange={e => updateArr('alarms', i, { alarmState: +e.target.value })}>
                           <option value={0}>0 (Off/Open)</option>
                           <option value={1}>1 (On/Closed)</option>
                         </select>
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Analog Source Settings */}
                   {a.srcType === 'analog' && (
                     <div className="form-row">
                       <div className="form-group">
                         <label title="Low Limit: triggers when below. High Limit: triggers when above.">Limit Type ⓘ</label>
-                        <select value={a.limitType} onChange={e => updateArr('alarms', i, {limitType: +e.target.value})}>
+                        <select value={a.limitType} onChange={e => updateArr('alarms', i, { limitType: +e.target.value })}>
                           <option value={0}>Low Limit</option>
                           <option value={1}>High Limit</option>
                         </select>
                       </div>
                       <div className="form-group">
                         <label>Limit Value</label>
-                        <input type="number" value={a.limit} onChange={e => updateArr('alarms', i, {limit: +e.target.value})} step="any" />
+                        <input type="number" value={a.limit} onChange={e => updateArr('alarms', i, { limit: +e.target.value })} step="any" />
                       </div>
                       <div className="form-group">
                         <label title="Deadband to prevent alarm chatter.">Hysteresis ⓘ</label>
-                        <input type="number" value={a.hysteresis} onChange={e => updateArr('alarms', i, {hysteresis: +e.target.value})} step="any" min={0} />
+                        <input type="number" value={a.hysteresis} onChange={e => updateArr('alarms', i, { hysteresis: +e.target.value })} step="any" min={0} />
                       </div>
                     </div>
                   )}
-                  
+
                   {/* DOUT Linking Section */}
                   <div className="dout-link-section">
-                    <h3 style={{fontSize:'1rem',marginBottom:'0.75rem',paddingBottom:'0',borderBottom:'none'}}>🔌 Link to Digital Output</h3>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem', paddingBottom: '0', borderBottom: 'none' }}>🔌 Link to Digital Output</h3>
                     <div className="form-row">
                       <div className="form-group">
                         <label>Output Relay</label>
-                        <select value={a.linkedDout} onChange={e => updateArr('alarms', i, {linkedDout: +e.target.value})}>
+                        <select value={a.linkedDout} onChange={e => updateArr('alarms', i, { linkedDout: +e.target.value })}>
                           <option value={0}>-- None --</option>
                           {getAvailableDouts(i).map(doNum => (
-                            <option key={doNum} value={doNum}>DO{doNum} (CH {70+doNum})</option>
+                            <option key={doNum} value={doNum}>DO{doNum} (CH {70 + doNum})</option>
                           ))}
                           {a.linkedDout > 0 && !getAvailableDouts(i).includes(a.linkedDout) && (
-                            <option value={a.linkedDout}>DO{a.linkedDout} (CH {70+a.linkedDout}) - Current</option>
+                            <option value={a.linkedDout}>DO{a.linkedDout} (CH {70 + a.linkedDout}) - Current</option>
                           )}
                         </select>
                       </div>
                       {a.linkedDout > 0 && (
                         <div className="form-group">
                           <label>When In Alarm</label>
-                          <select value={a.doutAction} onChange={e => updateArr('alarms', i, {doutAction: e.target.value})}>
+                          <select value={a.doutAction} onChange={e => updateArr('alarms', i, { doutAction: e.target.value })}>
                             <option value="activate">Activate Relay</option>
                             <option value="deactivate">Deactivate Relay</option>
                           </select>
@@ -756,28 +1426,28 @@
     }
 
     function PushStep({ cfg, updateArr }) {
-      const chOpts = [...cfg.di.filter(d => d.on).map(d => ({ch: 20+d.idx, name: d.name})), ...cfg.ai.filter(a => a.on).map(a => ({ch: 50+a.idx, name: a.name}))];
-      return (<div className="step-container"><div className="step-header"><h2>Peer-to-Peer (PUSH)</h2><p>Configure device-to-device data sharing.</p></div>{cfg.push.slice(0, 5).map((p, i) => (<div key={i} className="form-section" style={{marginBottom:'1rem'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}><label className="toggle-label"><input type="checkbox" checked={p.on} onChange={e => updateArr('push', i, {on: e.target.checked})} /><span className="toggle-switch"></span><span>PUSH {i+1}</span></label><div style={{display:'flex',gap:'0.5rem'}}>{p.on && p.mode === 2 && <span className="channel-badge">CH {95+i}</span>}<span className="channel-badge">Reg {1500+i}</span></div></div>{p.on && (<><div className="form-row"><div className="form-group"><label>Name</label><input value={p.name} onChange={e => updateArr('push', i, {name: e.target.value})} /></div><div className="form-group"><label>Mode</label><select value={p.mode} onChange={e => updateArr('push', i, {mode: +e.target.value})}><option value={1}>Send</option><option value={2}>Receive</option></select></div></div>{p.mode === 1 && (<div className="form-row"><div className="form-group"><label>Source Channel</label><select value={p.srcCh} onChange={e => updateArr('push', i, {srcCh: +e.target.value})}><option value={0}>-- Select --</option>{chOpts.map(c => <option key={c.ch} value={c.ch}>CH{c.ch}: {c.name}</option>)}</select></div><div className="form-group"><label>Delta</label><input type="number" value={p.delta} onChange={e => updateArr('push', i, {delta: +e.target.value})} step="0.1" /></div></div>)}{p.mode === 2 && (<div className="form-row"><div className="form-group"><label>Remote Channel #</label><input type="number" value={p.srcCh} onChange={e => updateArr('push', i, {srcCh: +e.target.value})} min={1} max={100} /></div><div className="form-group" style={{gridColumn:'span 2'}}><label>Peer IMEI</label><input value={p.peerImei} onChange={e => updateArr('push', i, {peerImei: e.target.value})} placeholder="15-digit IMEI" maxLength={15} /></div></div>)}</>)}</div>))}</div>);
+      const chOpts = [...cfg.di.filter(d => d.on).map(d => ({ ch: 20 + d.idx, name: d.name })), ...cfg.ai.filter(a => a.on).map(a => ({ ch: 50 + a.idx, name: a.name }))];
+      return (<div className="step-container"><div className="step-header"><h2>Peer-to-Peer (PUSH)</h2><p>Configure device-to-device data sharing.</p></div>{cfg.push.slice(0, 5).map((p, i) => (<div key={i} className="form-section" style={{ marginBottom: '1rem' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}><label className="toggle-label"><input type="checkbox" checked={p.on} onChange={e => updateArr('push', i, { on: e.target.checked })} /><span className="toggle-switch"></span><span>PUSH {i + 1}</span></label><div style={{ display: 'flex', gap: '0.5rem' }}>{p.on && p.mode === 2 && <span className="channel-badge">CH {95 + i}</span>}<span className="channel-badge">Reg {1500 + i}</span></div></div>{p.on && (<><div className="form-row"><div className="form-group"><label>Name</label><input value={p.name} onChange={e => updateArr('push', i, { name: e.target.value })} /></div><div className="form-group"><label>Mode</label><select value={p.mode} onChange={e => updateArr('push', i, { mode: +e.target.value })}><option value={1}>Send</option><option value={2}>Receive</option></select></div></div>{p.mode === 1 && (<div className="form-row"><div className="form-group"><label>Source Channel</label><select value={p.srcCh} onChange={e => updateArr('push', i, { srcCh: +e.target.value })}><option value={0}>-- Select --</option>{chOpts.map(c => <option key={c.ch} value={c.ch}>CH{c.ch}: {c.name}</option>)}</select></div><div className="form-group"><label>Delta</label><input type="number" value={p.delta} onChange={e => updateArr('push', i, { delta: +e.target.value })} step="0.1" /></div></div>)}{p.mode === 2 && (<div className="form-row"><div className="form-group"><label>Remote Channel #</label><input type="number" value={p.srcCh} onChange={e => updateArr('push', i, { srcCh: +e.target.value })} min={1} max={100} /></div><div className="form-group" style={{ gridColumn: 'span 2' }}><label>Peer IMEI</label><input value={p.peerImei} onChange={e => updateArr('push', i, { peerImei: e.target.value })} placeholder="15-digit IMEI" maxLength={15} /></div></div>)}</>)}</div>))}</div>);
     }
 
     function ReportingStep({ cfg, update }) {
-      return (<div className="step-container"><div className="step-header"><h2>Reporting</h2><p>Configure data reporting intervals.</p></div><div className="form-section"><h3>Report Settings</h3><div className="form-row"><div className="form-group"><label>Report Rate (min)</label><input type="number" value={cfg.reporting.rate} onChange={e => update('reporting', {rate: +e.target.value})} min={1} max={1440} /><p className="form-help">How often to send data to cloud</p></div><div className="form-group"><label>End of day summary interval (1440 mins = 24 hours)</label><input type="number" value={cfg.reporting.eodRate} onChange={e => update('reporting', {eodRate: +e.target.value})} min={60} max={1440} /></div></div></div></div>);
+      return (<div className="step-container"><div className="step-header"><h2>Reporting</h2><p>Configure data reporting intervals.</p></div><div className="form-section"><h3>Report Settings</h3><div className="form-row"><div className="form-group"><label>Report Rate (min)</label><input type="number" value={cfg.reporting.rate} onChange={e => update('reporting', { rate: +e.target.value })} min={1} max={1440} /><p className="form-help">How often to send data to cloud</p></div><div className="form-group"><label>End of day summary interval (1440 mins = 24 hours)</label><input type="number" value={cfg.reporting.eodRate} onChange={e => update('reporting', { eodRate: +e.target.value })} min={60} max={1440} /></div></div></div></div>);
     }
 
     function ReviewStep({ cfg, setOutput, errors, setErrors }) {
-      const validate = () => { 
-        const e = []; 
-        if (!cfg.site.name || cfg.site.name === 'Site Name') e.push('Site name required'); 
-        if (cfg.pumpCtrl.on && cfg.pumpCtrl.levelSrc === 0) e.push('Pump control: Level source required'); 
-        cfg.push.forEach((p, i) => { if (p.on && p.mode === 2 && !p.peerImei) e.push(`PUSH ${i+1}: Peer IMEI required`); }); 
-        cfg.alarms.forEach((a, i) => { if (a.on && a.srcCh === 0) e.push(`Alarm ${i+1}: Source channel required`); });
-        setErrors(e); 
-        return e.length === 0; 
+      const validate = () => {
+        const e = [];
+        if (!cfg.site.name || cfg.site.name === 'Site Name') e.push('Site name required');
+        if (cfg.pumpCtrl.on && cfg.pumpCtrl.levelSrc === 0) e.push('Pump control: Level source required');
+        cfg.push.forEach((p, i) => { if (p.on && p.mode === 2 && !p.peerImei) e.push(`PUSH ${i + 1}: Peer IMEI required`); });
+        cfg.alarms.forEach((a, i) => { if (a.on && a.srcCh === 0) e.push(`Alarm ${i + 1}: Source channel required`); });
+        setErrors(e);
+        return e.length === 0;
       };
       const generate = () => { if (!validate()) return; setOutput({ txt: generateConfigText(cfg), json: generateLosantJson(cfg), name: cfg.site.name }); };
-      
+
       const linkedDoutCount = cfg.alarms.filter(a => a.on && a.linkedDout > 0).length;
-      
+
       // Count only truly preserved (non-wizard-managed) config lines
       const isWizardManaged = (lineType, idx) => {
         if (lineType === 1 && idx === 1) return true;
@@ -798,14 +1468,14 @@
         if (l.type !== 'config') return false;
         return !isWizardManaged(l.lineType, l.idx);
       }).length || 0;
-      
-      return (<div className="step-container"><div className="step-header"><h2>Review & Generate</h2><p>Review your configuration.</p></div>{errors.length > 0 && (<div className="validation-errors"><h4>⚠️ Validation Errors</h4><ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul></div>)}<div className="summary-grid"><div className="summary-card"><h4>Site</h4><p>{cfg.site.name}</p><p>TZ: {TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}</p></div><div className="summary-card"><h4>Digital Inputs</h4><p>{cfg.di.filter(d => d.on).length} configured</p><ul>{cfg.di.filter(d => d.on).slice(0, 4).map(d => <li key={d.idx}>DI{d.idx}: {d.name}</li>)}</ul></div><div className="summary-card"><h4>Analog Inputs</h4><p>{cfg.ai.filter(a => a.on).length} configured</p><ul>{cfg.ai.filter(a => a.on).map(a => <li key={a.idx}>AI{a.idx}: {a.name}</li>)}</ul></div><div className="summary-card"><h4>Pump Control</h4><p>{cfg.pumpCtrl.on ? 'Enabled' : 'Disabled'}</p>{cfg.pumpCtrl.on && <p>Mode: {cfg.pumpCtrl.mode === 0 ? 'Drain' : 'Fill'}</p>}</div><div className="summary-card"><h4>Alarms</h4><p>{cfg.alarms.filter(a => a.on).length} configured</p><p>{linkedDoutCount} linked to outputs</p></div><div className="summary-card"><h4>Peer-to-Peer</h4><p>{cfg.push.filter(p => p.on).length} configured</p></div><div className="summary-card"><h4>Reporting</h4><p>Rate: {cfg.reporting.rate} min</p><p>EOD: {cfg.reporting.eodRate} min</p></div>{preservedConfigCount > 0 && <div className="summary-card"><h4>📋 Preserved</h4><p>{preservedConfigCount} config lines</p><p style={{fontSize:'0.85rem',opacity:0.8}}>From imported file</p></div>}</div><div className="generate-btn"><button className="btn btn-primary" style={{padding:'0.875rem 2rem',fontSize:'1rem'}} onClick={generate}>⚡ Generate Configuration</button></div></div>);
+
+      return (<div className="step-container"><div className="step-header"><h2>Review & Generate</h2><p>Review your configuration.</p></div>{errors.length > 0 && (<div className="validation-errors"><h4>⚠️ Validation Errors</h4><ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul></div>)}<div className="summary-grid"><div className="summary-card"><h4>Site</h4><p>{cfg.site.name}</p><p>TZ: {TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}</p></div><div className="summary-card"><h4>Digital Inputs</h4><p>{cfg.di.filter(d => d.on).length} configured</p><ul>{cfg.di.filter(d => d.on).slice(0, 4).map(d => <li key={d.idx}>DI{d.idx}: {d.name}</li>)}</ul></div><div className="summary-card"><h4>Analog Inputs</h4><p>{cfg.ai.filter(a => a.on).length} configured</p><ul>{cfg.ai.filter(a => a.on).map(a => <li key={a.idx}>AI{a.idx}: {a.name}</li>)}</ul></div><div className="summary-card"><h4>Pump Control</h4><p>{cfg.pumpCtrl.on ? 'Enabled' : 'Disabled'}</p>{cfg.pumpCtrl.on && <p>Mode: {cfg.pumpCtrl.mode === 0 ? 'Drain' : 'Fill'}</p>}</div><div className="summary-card"><h4>Alarms</h4><p>{cfg.alarms.filter(a => a.on).length} configured</p><p>{linkedDoutCount} linked to outputs</p></div><div className="summary-card"><h4>Peer-to-Peer</h4><p>{cfg.push.filter(p => p.on).length} configured</p></div><div className="summary-card"><h4>Reporting</h4><p>Rate: {cfg.reporting.rate} min</p><p>EOD: {cfg.reporting.eodRate} min</p></div>{preservedConfigCount > 0 && <div className="summary-card"><h4>📋 Preserved</h4><p>{preservedConfigCount} config lines</p><p style={{ fontSize: '0.85rem', opacity: 0.8 }}>From imported file</p></div>}</div><div className="generate-btn"><button className="btn btn-primary" style={{ padding: '0.875rem 2rem', fontSize: '1rem' }} onClick={generate}>⚡ Generate Configuration</button></div></div>);
     }
 
     function generateConfigText(cfg) {
       // Map to hold all config lines by "lineType,idx" key
       const configMap = new Map();
-      
+
       // Helper to check if a line type/idx is managed by the wizard
       const isWizardManaged = (lineType, idx) => {
         if (lineType === 1 && idx === 1) return true;
@@ -832,7 +1502,7 @@
         if (lineType === 39 && idx === 1) return true;
         return false;
       };
-      
+
       // Helper to add a line to the map
       const addLine = (lineStr) => {
         const parts = lineStr.split(',');
@@ -841,7 +1511,7 @@
         const key = `${lineType},${idx}`;
         configMap.set(key, { lineType, idx, line: lineStr });
       };
-      
+
       // First, add all original config lines (only non-wizard-managed will survive)
       if (cfg.originalLines && cfg.originalLines.length > 0) {
         cfg.originalLines.forEach(ol => {
@@ -850,18 +1520,18 @@
           }
         });
       }
-      
+
       // Now generate and add wizard-managed lines (these will override originals)
-      
+
       // Line 1 - Site config
       addLine(`1,1,${cfg.site.name},2,${cfg.site.dstOffset || 0},3,${cfg.site.timezone},7,1,8,1,9,${cfg.site.modbusId},11,0,13,10,14,1,15,600,17,1399818235,21,60,22,30,51,100,52,100,53,60,55,42,56,23,57,45,58,100`);
-      
+
       // Line 2 - Options config
       addLine('2,1,0,3,0,17,0,28,1,29,1,30,0');
-      
+
       // Line 7 - Reporting config
       addLine(`7,1,0,2,${cfg.reporting.eodRate},3,${cfg.reporting.rate},8,124,9,38,20,30`);
-      
+
       // Line 9 - Channels (only wizard-managed channels)
       const pumpChannels = [];
       cfg.di.forEach((d, i) => {
@@ -869,7 +1539,7 @@
           pumpChannels.push({ diIdx: i, baseChannel: 31 + i * 2, name: d.name });
         }
       });
-      
+
       // Generate only wizard-managed channels
       const wizardChannels = [];
       if (cfg.pumpCtrl.on) {
@@ -881,11 +1551,11 @@
       for (let ch = 51; ch <= 55; ch++) wizardChannels.push(ch);
       for (let ch = 71; ch <= 75; ch++) wizardChannels.push(ch);
       for (let ch = 95; ch <= 99; ch++) wizardChannels.push(ch);
-      
+
       wizardChannels.forEach(ch => {
         addLine(genChanLine(ch, cfg, pumpChannels));
       });
-      
+
       // Line 11 - Analog inputs with calibration fields
       cfg.ai.forEach((a, i) => {
         let zerocnt, fullcnt, zeroengr, fullengr;
@@ -896,40 +1566,40 @@
         } else {
           zerocnt = 0; fullcnt = 4095; zeroengr = 0.0; fullengr = 100.0;
         }
-        addLine(`11,${i+1},1,${a.name},2,${a.inputType},3,${a.damp.toFixed(3)},4,${a.zero.toFixed(1)},5,${a.full.toFixed(1)},6,${a.prec},11,10,12,${zerocnt},13,${fullcnt},14,${zeroengr.toFixed(1)},15,${fullengr.toFixed(1)},98,${101+i}`);
+        addLine(`11,${i + 1},1,${a.name},2,${a.inputType},3,${a.damp.toFixed(3)},4,${a.zero.toFixed(1)},5,${a.full.toFixed(1)},6,${a.prec},11,10,12,${zerocnt},13,${fullcnt},14,${zeroengr.toFixed(1)},15,${fullengr.toFixed(1)},98,${101 + i}`);
       });
-      
+
       // Line 17 - Digital inputs
       cfg.di.forEach((d, i) => {
-        addLine(`17,${i+1},1,${d.name},98,${201+i}`);
+        addLine(`17,${i + 1},1,${d.name},98,${201 + i}`);
       });
-      
+
       // Line 28 - Push/P2P config
       cfg.push.forEach((p, i) => {
-        addLine(`28,${i+1},1,${p.name},2,${p.on?p.mode:0},3,${p.srcCh},5,${p.delta.toFixed(2)},6,${p.debounce},7,${p.peerImei},98,${1500+i}`);
+        addLine(`28,${i + 1},1,${p.name},2,${p.on ? p.mode : 0},3,${p.srcCh},5,${p.delta.toFixed(2)},6,${p.debounce},7,${p.peerImei},98,${1500 + i}`);
       });
-      
+
       // Line 32 - Totalizers
-      let totIdx = 0; 
-      cfg.ai.forEach((a, i) => { 
-        if (a.on && a.totalizer && totIdx < 5) { 
-          addLine(`32,${totIdx+1},1,${a.name},2,1,3,${101+i},4,${a.prec},5,${a.totConv.toFixed(1)},6,${a.minFlow.toFixed(1)},20,0,21,0,98,${2501+totIdx},98,${2601+totIdx}`); 
-          totIdx++; 
+      let totIdx = 0;
+      cfg.ai.forEach((a, i) => {
+        if (a.on && a.totalizer && totIdx < 5) {
+          addLine(`32,${totIdx + 1},1,${a.name},2,1,3,${101 + i},4,${a.prec},5,${a.totConv.toFixed(1)},6,${a.minFlow.toFixed(1)},20,0,21,0,98,${2501 + totIdx},98,${2601 + totIdx}`);
+          totIdx++;
         }
       });
-      
+
       // Line 33 - Pump stats (when pump control disabled)
       if (!cfg.pumpCtrl.on) {
-        let pumpIdx = 0; 
-        cfg.di.forEach((d, i) => { 
-          if (d.on && d.isPump && i < 5) { 
-            const pumpName = d.name.replace(' Run','');
-            addLine(`33,${pumpIdx+1},1,${pumpName},2,1,3,${201+i},4,1,20,0,21,0,22,0,23,0,98,${3001+pumpIdx},98,${3101+pumpIdx},98,${3201+pumpIdx},98,${3301+pumpIdx}`); 
-            pumpIdx++; 
+        let pumpIdx = 0;
+        cfg.di.forEach((d, i) => {
+          if (d.on && d.isPump && i < 5) {
+            const pumpName = d.name.replace(' Run', '');
+            addLine(`33,${pumpIdx + 1},1,${pumpName},2,1,3,${201 + i},4,1,20,0,21,0,22,0,23,0,98,${3001 + pumpIdx},98,${3101 + pumpIdx},98,${3201 + pumpIdx},98,${3301 + pumpIdx}`);
+            pumpIdx++;
           }
         });
       }
-      
+
       // Line 34 - Alarms
       const getSourcePrec = (srcCh) => {
         if (srcCh >= 51 && srcCh <= 55) {
@@ -941,12 +1611,12 @@
       cfg.alarms.forEach((a, i) => {
         const prec = a.srcType === 'analog' ? getSourcePrec(a.srcCh) : 1;
         if (a.srcType === 'analog') {
-          addLine(`34,${i+1},1,${a.name},2,${a.on?1:0},3,${a.popup?1:0},4,${a.alarmType},5,${a.srcCh},6,${prec},7,${a.delay},8,0,9,${a.limitType},10,${a.limit.toFixed(1)},11,${a.hysteresis.toFixed(1)},12,-1.0,13,-1.0,14,1,98,${3501+i},98,${3601+i},98,${3701+i}`);
+          addLine(`34,${i + 1},1,${a.name},2,${a.on ? 1 : 0},3,${a.popup ? 1 : 0},4,${a.alarmType},5,${a.srcCh},6,${prec},7,${a.delay},8,0,9,${a.limitType},10,${a.limit.toFixed(1)},11,${a.hysteresis.toFixed(1)},12,-1.0,13,-1.0,14,1,98,${3501 + i},98,${3601 + i},98,${3701 + i}`);
         } else {
-          addLine(`34,${i+1},1,${a.name},2,${a.on?1:0},3,${a.popup?1:0},4,${a.alarmType},5,${a.srcCh},6,1,7,${a.delay},8,0,9,0,10,-1.0,11,0.0,12,-1.0,13,-1.0,14,${a.alarmState},98,${3501+i},98,${3601+i},98,${3701+i}`);
+          addLine(`34,${i + 1},1,${a.name},2,${a.on ? 1 : 0},3,${a.popup ? 1 : 0},4,${a.alarmType},5,${a.srcCh},6,1,7,${a.delay},8,0,9,0,10,-1.0,11,0.0,12,-1.0,13,-1.0,14,${a.alarmState},98,${3501 + i},98,${3601 + i},98,${3701 + i}`);
         }
       });
-      
+
       // Line 36 - Digital Outputs
       const alarmLinkedDouts = {};
       cfg.alarms.forEach((a, i) => {
@@ -961,37 +1631,37 @@
       cfg.dout.forEach((d, i) => {
         const doNum = i + 1;
         if (cfg.pumpCtrl.on && i < 2) {
-          addLine(`36,${doNum},1,Pump${doNum} CallToStart,2,1,3,${5501+i},4,${301+i},5,1,6,0,7,1,8,0,98,${4501+i}`);
+          addLine(`36,${doNum},1,Pump${doNum} CallToStart,2,1,3,${5501 + i},4,${301 + i},5,1,6,0,7,1,8,0,98,${4501 + i}`);
         } else if (alarmLinkedDouts[doNum]) {
           const link = alarmLinkedDouts[doNum];
           const srcReg = 3501 + link.alarmIdx;
           const outActiveSrc = link.action === 'activate' ? 1 : 0;
           const outNotActiveSrc = link.action === 'activate' ? 0 : 1;
-          addLine(`36,${doNum},1,${link.alarmName},2,1,3,${srcReg},4,${301+i},5,1,6,${outNotActiveSrc},7,${outActiveSrc},8,0,98,${4501+i}`);
+          addLine(`36,${doNum},1,${link.alarmName},2,1,3,${srcReg},4,${301 + i},5,1,6,${outNotActiveSrc},7,${outActiveSrc},8,0,98,${4501 + i}`);
         } else {
-          addLine(`36,${doNum},1,${d.name},2,${d.on?1:0},3,${d.srcReg},4,${301+i},5,${d.srcActiveState},6,${d.outNotActiveSrc},7,${d.outActiveSrc},8,${d.duration},98,${4501+i}`);
+          addLine(`36,${doNum},1,${d.name},2,${d.on ? 1 : 0},3,${d.srcReg},4,${301 + i},5,${d.srcActiveState},6,${d.outNotActiveSrc},7,${d.outActiveSrc},8,${d.duration},98,${4501 + i}`);
         }
       });
-      
+
       // Line 39 - Pump control (only if enabled)
       if (cfg.pumpCtrl.on) {
         const levelSrcReg = cfg.pumpCtrl.levelSrc || 0;
         addLine(`39,1,1,2,${cfg.pumpCtrl.mode},3,2,7,1,8,${levelSrcReg},9,201,12,202,25,${cfg.pumpCtrl.leadOn.toFixed(1)},26,${cfg.pumpCtrl.lagOn.toFixed(1)},27,${cfg.pumpCtrl.allOff.toFixed(1)},30,${cfg.pumpCtrl.debounce},31,${cfg.pumpCtrl.startDly},43,71,44,72`);
       }
-      
+
       // Sort all lines by lineType, then by idx
       const sortedLines = Array.from(configMap.values()).sort((a, b) => {
         if (a.lineType !== b.lineType) return a.lineType - b.lineType;
         return a.idx - b.idx;
       });
-      
+
       // Return just the line strings
       return sortedLines.map(item => item.line).join('\n');
     }
 
     function genChanLine(ch, cfg, pumpChannels) {
       const pumpCtrlEnabled = cfg.pumpCtrl.on;
-      
+
       // Pump control stats channels 11-18
       if (ch >= 11 && ch <= 18 && pumpCtrlEnabled) {
         const pumpNum = ch <= 14 ? 1 : 2;
@@ -1001,18 +1671,18 @@
         const statRegs = [3000 + pumpNum, 3100 + pumpNum, 3200 + pumpNum, 3300 + pumpNum];
         const statUnits = ['', '', 'secs', 'secs'];
         if (statTypes[statIdx] === 1) {
-          return `9,${ch},1,Pump${pumpNum} ${statNames[statIdx]},2,1,3,1,4,1,5,${statRegs[statIdx]},6,0,7,0.0,8,5,9,0,30,0,31,Off,32,On,98,${1000+ch}`;
+          return `9,${ch},1,Pump${pumpNum} ${statNames[statIdx]},2,1,3,1,4,1,5,${statRegs[statIdx]},6,0,7,0.0,8,5,9,0,30,0,31,Off,32,On,98,${1000 + ch}`;
         } else {
-          return `9,${ch},1,Pump${pumpNum} ${statNames[statIdx]},2,1,3,2,4,1,5,${statRegs[statIdx]},6,0,7,0.5,8,0,9,0,20,0,21,${statUnits[statIdx]},98,${1000+ch}`;
+          return `9,${ch},1,Pump${pumpNum} ${statNames[statIdx]},2,1,3,2,4,1,5,${statRegs[statIdx]},6,0,7,0.5,8,0,9,0,20,0,21,${statUnits[statIdx]},98,${1000 + ch}`;
         }
       }
-      
+
       // HOA position channels when pump control enabled
       if ((ch === 31 || ch === 32) && pumpCtrlEnabled) {
         const pumpNum = ch - 30;
-        return `9,${ch},1,Pump${pumpNum} HOA Pos,2,1,3,2,4,1,5,${5800+pumpNum},6,0,7,0.5,8,0,9,0,20,0,21,,98,${1000+ch}`;
+        return `9,${ch},1,Pump${pumpNum} HOA Pos,2,1,3,2,4,1,5,${5800 + pumpNum},6,0,7,0.5,8,0,9,0,20,0,21,,98,${1000 + ch}`;
       }
-      
+
       // Pump stats channels 31-40 when pump control disabled (manual tracking)
       if (ch >= 31 && ch <= 40 && !pumpCtrlEnabled) {
         const pumpIdx = Math.floor((ch - 31) / 2);
@@ -1024,134 +1694,135 @@
           const statRegs = [3101 + pumpIdx, 3201 + pumpIdx];
           const pumpName = pump.name.replace(' Run', '');
           const delta = statType === 1 ? 60.0 : 0.5;
-          return `9,${ch},1,${pumpName} ${statNames[statType]},2,1,3,2,4,1,5,${statRegs[statType]},6,0,7,${delta.toFixed(1)},8,0,9,0,20,${statType},21,${statUnits[statType]},98,${1000+ch}`;
+          return `9,${ch},1,${pumpName} ${statNames[statType]},2,1,3,2,4,1,5,${statRegs[statType]},6,0,7,${delta.toFixed(1)},8,0,9,0,20,${statType},21,${statUnits[statType]},98,${1000 + ch}`;
         }
-        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000+ch}`;
+        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000 + ch}`;
       }
-      
+
       // Totalizer output channels 44-48 (daily totals, reset at midnight)
       if (ch >= 44 && ch <= 48) {
         const totIdx = ch - 44;
         const totalizerAIs = cfg.ai.filter(a => a.on && a.totalizer);
         if (totIdx < totalizerAIs.length) {
           const a = totalizerAIs[totIdx];
-          return `9,${ch},1,${a.name} Daily Total,2,1,3,2,4,1,5,${2501+totIdx},6,4,7,0.5,8,5,9,0,20,${a.prec},21,gal,98,${1000+ch}`;
+          return `9,${ch},1,${a.name} Daily Total,2,1,3,2,4,1,5,${2501 + totIdx},6,4,7,0.5,8,5,9,0,20,${a.prec},21,gal,98,${1000 + ch}`;
         }
-        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000+ch}`;
+        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000 + ch}`;
       }
-      
+
       // Digital output channels 71-75
       if (ch >= 71 && ch <= 75) {
         const idx = ch - 71;
         const doNum = idx + 1;
         const linkedAlarm = cfg.alarms.find(a => a.on && a.linkedDout === doNum);
-        
+
         if (pumpCtrlEnabled && idx < 2) {
-          return `9,${ch},1,Pump${idx+1} CallToStart,2,1,3,1,4,1,5,${5501+idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000+ch}`;
+          return `9,${ch},1,Pump${idx + 1} CallToStart,2,1,3,1,4,1,5,${5501 + idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000 + ch}`;
         } else if (linkedAlarm) {
-          return `9,${ch},1,${linkedAlarm.name},2,1,3,1,4,1,5,${301+idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000+ch}`;
+          return `9,${ch},1,${linkedAlarm.name},2,1,3,1,4,1,5,${301 + idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000 + ch}`;
         }
         const d = cfg.dout[idx];
-        return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${301+idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000+ch}`;
+        return `9,${ch},1,${d.name},2,${d.on ? 1 : 0},3,1,4,1,5,${301 + idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000 + ch}`;
       }
-      
+
       // P2P receive channels 95-99
       if (ch >= 95 && ch <= 99) {
         const pushIdx = ch - 95;
         const push = cfg.push[pushIdx];
         if (push && push.on && push.mode === 2) {
-          return `9,${ch},1,${push.name},2,1,3,2,4,1,5,${1500+pushIdx},6,0,7,0.5,8,0,9,1,20,1,21,${push.units || 'units'},98,${1000+ch}`;
+          return `9,${ch},1,${push.name},2,1,3,2,4,1,5,${1500 + pushIdx},6,0,7,0.5,8,0,9,1,20,1,21,${push.units || 'units'},98,${1000 + ch}`;
         }
-        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000+ch}`;
+        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000 + ch}`;
       }
-      
+
       // Digital input channels 21-30
-      if (ch >= 21 && ch <= 30) { 
-        const d = cfg.di[ch-21]; 
-        return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${200+ch-20},6,${d.scroll},7,${d.delta},8,${d.debounce},9,0,30,0,31,${d.lbl0},32,${d.lbl1},98,${1000+ch}`; 
+      if (ch >= 21 && ch <= 30) {
+        const d = cfg.di[ch - 21];
+        return `9,${ch},1,${d.name},2,${d.on ? 1 : 0},3,1,4,1,5,${200 + ch - 20},6,${d.scroll},7,${d.delta},8,${d.debounce},9,0,30,0,31,${d.lbl0},32,${d.lbl1},98,${1000 + ch}`;
       }
-      
+
       // Analog input channels 51-55
-      if (ch >= 51 && ch <= 55) { 
-        const a = cfg.ai[ch-51]; 
-        return `9,${ch},1,${a.name},2,${a.on?1:0},3,2,4,1,5,${100+ch-50},6,${a.scroll},7,${a.delta},8,${a.debounce},9,0,20,${a.prec},21,${a.units},98,${1000+ch}`; 
+      if (ch >= 51 && ch <= 55) {
+        const a = cfg.ai[ch - 51];
+        return `9,${ch},1,${a.name},2,${a.on ? 1 : 0},3,2,4,1,5,${100 + ch - 50},6,${a.scroll},7,${a.delta},8,${a.debounce},9,0,20,${a.prec},21,${a.units},98,${1000 + ch}`;
       }
-      
+
       // Default for all other channels
-      return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000+ch}`;
+      return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000 + ch}`;
     }
 
     function generateLosantJson(cfg) {
-      const attrs = [], tags = [{key:'deviceType',value:'aquavx-proplus'},{key:'timezone',value:TIMEZONES.find(t => t.id === cfg.site.timezone)?.name}];
-      cfg.di.filter(d => d.on).forEach(d => { attrs.push({name:`ch${20+d.idx}`,dataType:'boolean',description:d.name}); tags.push({key:`ch${20+d.idx}_name`,value:d.name},{key:`ch${20+d.idx}_normal_state`,value:String(d.normalState)}); });
-      cfg.ai.filter(a => a.on).forEach(a => { attrs.push({name:`ch${50+a.idx}`,dataType:'number',description:a.name}); tags.push({key:`ch${50+a.idx}_name`,value:a.name},{key:`ch${50+a.idx}_units`,value:a.units}); });
-      
+      const attrs = [], tags = [{ key: 'deviceType', value: 'aquavx-proplus' }, { key: 'timezone', value: TIMEZONES.find(t => t.id === cfg.site.timezone)?.name }];
+      cfg.di.filter(d => d.on).forEach(d => { attrs.push({ name: `ch${20 + d.idx}`, dataType: 'boolean', description: d.name }); tags.push({ key: `ch${20 + d.idx}_name`, value: d.name }, { key: `ch${20 + d.idx}_normal_state`, value: String(d.normalState) }); });
+      cfg.ai.filter(a => a.on).forEach(a => { attrs.push({ name: `ch${50 + a.idx}`, dataType: 'number', description: a.name }); tags.push({ key: `ch${50 + a.idx}_name`, value: a.name }, { key: `ch${50 + a.idx}_units`, value: a.units }); });
+
       // Totalizer channels (44-48) - daily totals
       const totalizerAIs = cfg.ai.filter(a => a.on && a.totalizer);
       totalizerAIs.forEach((a, i) => {
         const ch = 44 + i;
-        attrs.push({name:`ch${ch}`,dataType:'number',description:`${a.name} Daily Total`});
-        tags.push({key:`ch${ch}_name`,value:`${a.name} Daily Total`},{key:`ch${ch}_units`,value:'gal'});
+        attrs.push({ name: `ch${ch}`, dataType: 'number', description: `${a.name} Daily Total` });
+        tags.push({ key: `ch${ch}_name`, value: `${a.name} Daily Total` }, { key: `ch${ch}_units`, value: 'gal' });
       });
-      
+
       if (cfg.pumpCtrl.on) {
         for (let p = 1; p <= 2; p++) {
           const baseChannel = 11 + (p - 1) * 4;
-          attrs.push({name:`ch${baseChannel}`,dataType:'boolean',description:`Pump${p} Run`});
-          tags.push({key:`ch${baseChannel}_name`,value:`Pump${p} Run`});
-          attrs.push({name:`ch${baseChannel+1}`,dataType:'number',description:`Pump${p} Starts`});
-          tags.push({key:`ch${baseChannel+1}_name`,value:`Pump${p} Starts`},{key:`ch${baseChannel+1}_units`,value:'cnt'});
-          attrs.push({name:`ch${baseChannel+2}`,dataType:'number',description:`Pump${p} Runtime`});
-          tags.push({key:`ch${baseChannel+2}_name`,value:`Pump${p} Runtime`},{key:`ch${baseChannel+2}_units`,value:'sec'});
-          attrs.push({name:`ch${baseChannel+3}`,dataType:'number',description:`Pump${p} CycleTime`});
-          tags.push({key:`ch${baseChannel+3}_name`,value:`Pump${p} CycleTime`},{key:`ch${baseChannel+3}_units`,value:'sec'});
-          attrs.push({name:`ch${30+p}`,dataType:'number',description:`Pump${p} HOA Pos`});
-          tags.push({key:`ch${30+p}_name`,value:`Pump${p} HOA Pos`});
+          attrs.push({ name: `ch${baseChannel}`, dataType: 'boolean', description: `Pump${p} Run` });
+          tags.push({ key: `ch${baseChannel}_name`, value: `Pump${p} Run` });
+          attrs.push({ name: `ch${baseChannel + 1}`, dataType: 'number', description: `Pump${p} Starts` });
+          tags.push({ key: `ch${baseChannel + 1}_name`, value: `Pump${p} Starts` }, { key: `ch${baseChannel + 1}_units`, value: 'cnt' });
+          attrs.push({ name: `ch${baseChannel + 2}`, dataType: 'number', description: `Pump${p} Runtime` });
+          tags.push({ key: `ch${baseChannel + 2}_name`, value: `Pump${p} Runtime` }, { key: `ch${baseChannel + 2}_units`, value: 'sec' });
+          attrs.push({ name: `ch${baseChannel + 3}`, dataType: 'number', description: `Pump${p} CycleTime` });
+          tags.push({ key: `ch${baseChannel + 3}_name`, value: `Pump${p} CycleTime` }, { key: `ch${baseChannel + 3}_units`, value: 'sec' });
+          attrs.push({ name: `ch${30 + p}`, dataType: 'number', description: `Pump${p} HOA Pos` });
+          tags.push({ key: `ch${30 + p}_name`, value: `Pump${p} HOA Pos` });
         }
         for (let p = 1; p <= 2; p++) {
-          attrs.push({name:`ch${70+p}`,dataType:'boolean',description:`Pump${p} CallToStart`});
-          tags.push({key:`ch${70+p}_name`,value:`Pump${p} CallToStart`});
+          attrs.push({ name: `ch${70 + p}`, dataType: 'boolean', description: `Pump${p} CallToStart` });
+          tags.push({ key: `ch${70 + p}_name`, value: `Pump${p} CallToStart` });
         }
       } else {
         cfg.di.forEach((d, i) => {
           if (d.on && d.isPump && i < 5) {
             const baseChannel = 31 + i * 2;
             const pumpName = d.name.replace(' Run', '');
-            attrs.push({name:`ch${baseChannel}`,dataType:'number',description:`${pumpName} Daily Starts`});
-            tags.push({key:`ch${baseChannel}_name`,value:`${pumpName} Daily Starts`},{key:`ch${baseChannel}_units`,value:'cnt'});
-            attrs.push({name:`ch${baseChannel+1}`,dataType:'number',description:`${pumpName} Daily Runtime`});
-            tags.push({key:`ch${baseChannel+1}_name`,value:`${pumpName} Daily Runtime`},{key:`ch${baseChannel+1}_units`,value:'sec'});
+            attrs.push({ name: `ch${baseChannel}`, dataType: 'number', description: `${pumpName} Daily Starts` });
+            tags.push({ key: `ch${baseChannel}_name`, value: `${pumpName} Daily Starts` }, { key: `ch${baseChannel}_units`, value: 'cnt' });
+            attrs.push({ name: `ch${baseChannel + 1}`, dataType: 'number', description: `${pumpName} Daily Runtime` });
+            tags.push({ key: `ch${baseChannel + 1}_name`, value: `${pumpName} Daily Runtime` }, { key: `ch${baseChannel + 1}_units`, value: 'sec' });
           }
         });
       }
-      
+
       cfg.alarms.forEach((a, i) => {
         if (a.on && a.linkedDout > 0) {
           const ch = 70 + a.linkedDout;
-          attrs.push({name:`ch${ch}`,dataType:'boolean',description:a.name});
-          tags.push({key:`ch${ch}_name`,value:a.name});
+          attrs.push({ name: `ch${ch}`, dataType: 'boolean', description: a.name });
+          tags.push({ key: `ch${ch}_name`, value: a.name });
         }
       });
-      
+
       cfg.push.forEach((p, i) => {
         if (p.on && p.mode === 2 && i < 5) {
           const ch = 95 + i;
-          attrs.push({name:`ch${ch}`,dataType:'number',description:p.name});
-          tags.push({key:`ch${ch}_name`,value:p.name},{key:`ch${ch}_units`,value:'units'});
+          attrs.push({ name: `ch${ch}`, dataType: 'number', description: p.name });
+          tags.push({ key: `ch${ch}_name`, value: p.name }, { key: `ch${ch}_units`, value: 'units' });
         }
       });
-      
-      return {name:cfg.site.name,description:`Aquavx ProPlus - ${cfg.site.name}`,deviceClass:'standalone',tags,attributes:attrs};
+
+      return { name: cfg.site.name, description: `Aquavx Pro - ${cfg.site.name}`, deviceClass: 'standalone', tags, attributes: attrs };
     }
 
     function OutputModal({ output, onClose }) {
       const [tab, setTab] = useState('txt');
-      const download = (content, name, type) => { const blob = new Blob([content], {type}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); };
+      const download = (content, name, type) => { const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); };
       const getConfigFilename = () => { const base = output.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toUpperCase().padEnd(8, 'X'); return `${base}.lfc`; };
-      return (<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e => e.stopPropagation()}><div className="modal-header"><h3>Generated Configuration</h3><button className="modal-close" onClick={onClose}>×</button></div><div className="modal-body"><div className="tabs"><button className={`tab ${tab==='txt'?'active':''}`} onClick={() => setTab('txt')}>Device Config</button><button className={`tab ${tab==='json'?'active':''}`} onClick={() => setTab('json')}>Losant JSON</button></div>{tab === 'txt' && (<><pre className="config-preview">{output.txt}</pre><button className="btn btn-primary" onClick={() => download(output.txt, getConfigFilename(), 'text/plain')}>📥 Download Config (.lfc)</button></>)}{tab === 'json' && (<><pre className="config-preview">{JSON.stringify(output.json, null, 2)}</pre><button className="btn btn-primary" onClick={() => download(JSON.stringify(output.json, null, 2), `${output.name.replace(/\s+/g,'_')}_losant.json`, 'application/json')}>📥 Download JSON</button></>)}</div><div className="modal-footer"><button className="btn btn-secondary" onClick={onClose}>Close</button></div></div></div>);
+      return (<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e => e.stopPropagation()}><div className="modal-header"><h3>Generated Configuration</h3><button className="modal-close" onClick={onClose}>×</button></div><div className="modal-body"><div className="tabs"><button className={`tab ${tab === 'txt' ? 'active' : ''}`} onClick={() => setTab('txt')}>Device Config</button><button className={`tab ${tab === 'json' ? 'active' : ''}`} onClick={() => setTab('json')}>Losant JSON</button></div>{tab === 'txt' && (<><pre className="config-preview">{output.txt}</pre><button className="btn btn-primary" onClick={() => download(output.txt, getConfigFilename(), 'text/plain')}>📥 Download Config (.lfc)</button></>)}{tab === 'json' && (<><pre className="config-preview">{JSON.stringify(output.json, null, 2)}</pre><button className="btn btn-primary" onClick={() => download(JSON.stringify(output.json, null, 2), `${output.name.replace(/\s+/g, '_')}_losant.json`, 'application/json')}>📥 Download JSON</button></>)}</div><div className="modal-footer"><button className="btn btn-secondary" onClick={onClose}>Close</button></div></div></div>);
     }
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
+
 </html>
