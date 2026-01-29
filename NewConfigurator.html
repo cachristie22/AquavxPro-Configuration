@@ -142,7 +142,7 @@
       ai:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`AI${i+1}`,inputType:2,preset:'custom',zero:0,full:100,units:'units',prec:1,damp:0.5,delta:1,debounce:5,totalizer:false,totConv:60,minFlow:0})),
       pumpCtrl:{on:false,mode:1,levelSrc:0,p1:0,p2:0,leadOn:10,lagOn:12,allOff:5,debounce:5,startDly:3},
       alarms:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Alarm${i+1}`,srcCh:0,srcType:'',alarmType:0,delay:0,alarmState:1,limitType:0,limit:0,hysteresis:0,popup:true,linkedDout:0,doutAction:'activate'})),
-      push:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Push${i+1}`,mode:0,srcCh:0,delta:1,debounce:5,peerImei:''})),
+      push:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Push${i+1}`,mode:0,srcCh:0,delta:1,debounce:5,peerImei:'',units:'units'})),
       reporting:{rate:5,eodRate:1440},
       dout:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DO${i+1}`,srcReg:0,srcActiveState:1,outActiveSrc:1,outNotActiveSrc:0,duration:0})),
       originalLines:[] // Stores lines from imported config that wizard doesn't handle
@@ -303,8 +303,16 @@
               newCfg.ai[idx].on = enabled;
               newCfg.ai[idx].units = p[21] || 'units';
               newCfg.ai[idx].prec = p[20] ?? 1;
-              newCfg.ai[idx].delta = p[22] ?? 1;
-              newCfg.ai[idx].debounce = p[23] ?? 5;
+              newCfg.ai[idx].delta = p[7] ?? 1;      // delta is at field 7
+              newCfg.ai[idx].debounce = p[8] ?? 5;   // deltadeb is at field 8
+            }
+            
+            // P2P receive channels 95-99
+            if (ch >= 95 && ch <= 99) {
+              const pushIdx = ch - 95;
+              if (enabled) {
+                newCfg.push[pushIdx].units = p[21] || 'units';
+              }
             }
           }
           
@@ -746,9 +754,13 @@
 
     function generateConfigText(cfg) {
       let lines = [];
-      lines.push(`1,1,${cfg.site.name},2,${cfg.site.dstOffset || 0},3,${cfg.site.timezone},7,1,8,1,9,${cfg.site.modbusId},11,0,13,10,14,1,15,600`);
-      lines.push('2,1,0,3,0,17,0,28,1,29,1,30,0,31,0');
-      lines.push(`7,1,0,2,${cfg.reporting.eodRate},3,${cfg.reporting.rate},8,124,9,38,20,30,21,0`);
+      // Line 1 - Site config with all standard fields
+      // Extra fields: 17=satepoch, 21=smscalldly, 22=resenddly, 51=ledbright, 52=dispbright, 53=disptout, 55-58=favpages
+      lines.push(`1,1,${cfg.site.name},2,${cfg.site.dstOffset || 0},3,${cfg.site.timezone},7,1,8,1,9,${cfg.site.modbusId},11,0,13,10,14,1,15,600,17,1399818235,21,60,22,30,51,100,52,100,53,60,55,42,56,23,57,45,58,100`);
+      // Line 2 - Options config
+      lines.push('2,1,0,3,0,17,0,28,1,29,1,30,0');
+      // Line 7 - Reporting config
+      lines.push(`7,1,0,2,${cfg.reporting.eodRate},3,${cfg.reporting.rate},8,124,9,38,20,30`);
       
       const pumpChannels = [];
       cfg.di.forEach((d, i) => {
@@ -758,17 +770,42 @@
       });
       
       for (let ch = 1; ch <= 100; ch++) lines.push(genChanLine(ch, cfg, pumpChannels));
-      cfg.ai.forEach((a, i) => lines.push(`11,${i+1},1,${a.name},2,${a.inputType},3,${a.damp.toFixed(3)},4,${a.zero.toFixed(1)},5,${a.full.toFixed(1)},6,${a.prec},98,${101+i}`));
-      cfg.di.forEach((d, i) => lines.push(`17,${i+1},1,${d.name},98,${201+i}`));
-      let totIdx = 0; cfg.ai.forEach((a, i) => { if (a.on && a.totalizer && totIdx < 5) { lines.push(`32,${totIdx+1},1,${a.name},2,1,3,${101+i},4,${a.prec},5,${a.totConv.toFixed(1)},6,${a.minFlow.toFixed(1)},98,${2501+totIdx}`); totIdx++; }});
       
+      // Line 11 - Analog inputs with calibration fields
+      // Format: 11,{idx},1,{name},2,{inputType},3,{damp},4,{zero},5,{full},6,{prec},11,{rawoff},12,{zerocnt},13,{fullcnt},14,{zeroengr},15,{fullengr},98,{reg}
+      cfg.ai.forEach((a, i) => {
+        // Calibration defaults based on input type
+        let zerocnt, fullcnt, zeroengr, fullengr;
+        if (a.inputType === 2) { // 4-20mA
+          zerocnt = 461; fullcnt = 2313; zeroengr = 4.0; fullengr = 20.0;
+        } else if (a.inputType === 3) { // 0-5V
+          zerocnt = 0; fullcnt = 3720; zeroengr = 0.0; fullengr = 5.0;
+        } else { // Default/other
+          zerocnt = 0; fullcnt = 4095; zeroengr = 0.0; fullengr = 100.0;
+        }
+        lines.push(`11,${i+1},1,${a.name},2,${a.inputType},3,${a.damp.toFixed(3)},4,${a.zero.toFixed(1)},5,${a.full.toFixed(1)},6,${a.prec},11,10,12,${zerocnt},13,${fullcnt},14,${zeroengr.toFixed(1)},15,${fullengr.toFixed(1)},98,${101+i}`);
+      });
+      
+      cfg.di.forEach((d, i) => lines.push(`17,${i+1},1,${d.name},98,${201+i}`));
+      
+      // Line 32 - Totalizers with dest channels and dual output registers
+      // Format: 32,{idx},1,{name},2,{enable},3,{srcreg},4,{prec},5,{flowconv},6,{minflow},20,{ratedestchan},21,{totaldestchan},98,{reg1},98,{reg2}
+      let totIdx = 0; 
+      cfg.ai.forEach((a, i) => { 
+        if (a.on && a.totalizer && totIdx < 5) { 
+          lines.push(`32,${totIdx+1},1,${a.name},2,1,3,${101+i},4,${a.prec},5,${a.totConv.toFixed(1)},6,${a.minFlow.toFixed(1)},20,0,21,0,98,${2501+totIdx},98,${2601+totIdx}`); 
+          totIdx++; 
+        }
+      });
+      
+      // Line 33 - Pump stats (when pump control disabled)
+      // Format: 33,{idx},1,{name},2,{enable},3,{srcreg},4,{runstate},20,{rundest},21,{strtsdest},22,{durdest},23,0,98,{reg1},98,{reg2},98,{reg3},98,{reg4}
       if (!cfg.pumpCtrl.on) {
         let pumpIdx = 0; 
         cfg.di.forEach((d, i) => { 
           if (d.on && d.isPump && i < 5) { 
-            const baseChannel = 31 + pumpIdx * 2;
             const pumpName = d.name.replace(' Run','');
-            lines.push(`33,${pumpIdx+1},1,${pumpName},2,1,3,${201+i},4,1,21,${baseChannel},22,${baseChannel+1},98,${3001+pumpIdx},98,${3101+pumpIdx},98,${3201+pumpIdx}`); 
+            lines.push(`33,${pumpIdx+1},1,${pumpName},2,1,3,${201+i},4,1,20,0,21,0,22,0,23,0,98,${3001+pumpIdx},98,${3101+pumpIdx},98,${3201+pumpIdx},98,${3301+pumpIdx}`); 
             pumpIdx++; 
           }
         });
@@ -845,6 +882,7 @@
     function genChanLine(ch, cfg, pumpChannels) {
       const pumpCtrlEnabled = cfg.pumpCtrl.on;
       
+      // Pump control stats channels 11-18
       if (ch >= 11 && ch <= 18 && pumpCtrlEnabled) {
         const pumpNum = ch <= 14 ? 1 : 2;
         const statIdx = (ch - 11) % 4;
@@ -853,68 +891,84 @@
         const statRegs = [3000 + pumpNum, 3100 + pumpNum, 3200 + pumpNum, 3300 + pumpNum];
         const statUnits = ['', '', 'secs', 'secs'];
         if (statTypes[statIdx] === 1) {
-          return `9,${ch},1,Pump${pumpNum} ${statNames[statIdx]},2,1,3,1,4,1,5,${statRegs[statIdx]},6,0,30,0,31,Off,32,On,98,${1000+ch}`;
+          return `9,${ch},1,Pump${pumpNum} ${statNames[statIdx]},2,1,3,1,4,1,5,${statRegs[statIdx]},6,0,7,0.0,8,5,9,0,30,0,31,Off,32,On,98,${1000+ch}`;
         } else {
-          return `9,${ch},1,Pump${pumpNum} ${statNames[statIdx]},2,1,3,2,4,1,5,${statRegs[statIdx]},6,0,20,0,21,${statUnits[statIdx]},98,${1000+ch}`;
+          return `9,${ch},1,Pump${pumpNum} ${statNames[statIdx]},2,1,3,2,4,1,5,${statRegs[statIdx]},6,0,7,0.5,8,0,9,0,20,0,21,${statUnits[statIdx]},98,${1000+ch}`;
         }
       }
       
+      // HOA position channels when pump control enabled
       if ((ch === 31 || ch === 32) && pumpCtrlEnabled) {
         const pumpNum = ch - 30;
-        return `9,${ch},1,Pump${pumpNum} HOA Pos,2,1,3,2,4,1,5,${5800+pumpNum},6,0,20,0,21,,98,${1000+ch}`;
+        return `9,${ch},1,Pump${pumpNum} HOA Pos,2,1,3,2,4,1,5,${5800+pumpNum},6,0,7,0.5,8,0,9,0,20,0,21,,98,${1000+ch}`;
       }
       
+      // Pump stats channels 31-40 when pump control disabled (manual tracking)
       if (ch >= 31 && ch <= 40 && !pumpCtrlEnabled) {
         const pumpIdx = Math.floor((ch - 31) / 2);
         const statType = (ch - 31) % 2;
         const pump = pumpChannels.find(p => p.diIdx === pumpIdx);
         if (pump) {
           const statNames = ['Daily Starts', 'Daily Runtime'];
-          const statUnits = ['cnt', 'sec'];
+          const statUnits = ['Starts', 'sec'];
           const statRegs = [3101 + pumpIdx, 3201 + pumpIdx];
           const pumpName = pump.name.replace(' Run', '');
-          return `9,${ch},1,${pumpName} ${statNames[statType]},2,1,3,2,4,1,5,${statRegs[statType]},6,4,20,0,21,${statUnits[statType]},98,${1000+ch}`;
+          const delta = statType === 1 ? 60.0 : 0.5;
+          return `9,${ch},1,${pumpName} ${statNames[statType]},2,1,3,2,4,1,5,${statRegs[statType]},6,0,7,${delta.toFixed(1)},8,0,9,0,20,${statType},21,${statUnits[statType]},98,${1000+ch}`;
         }
-        return `9,${ch},1,Chan ${ch},2,0,3,0,4,1,5,0,6,0,98,${1000+ch}`;
+        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000+ch}`;
       }
       
       // Totalizer output channels 44-48 (daily totals, reset at midnight)
       if (ch >= 44 && ch <= 48) {
         const totIdx = ch - 44;
-        // Build list of AIs with totalizer enabled
         const totalizerAIs = cfg.ai.filter(a => a.on && a.totalizer);
         if (totIdx < totalizerAIs.length) {
           const a = totalizerAIs[totIdx];
-          return `9,${ch},1,${a.name} Daily Total,2,1,3,2,4,1,5,${2501+totIdx},6,4,20,${a.prec},21,gal,98,${1000+ch}`;
+          return `9,${ch},1,${a.name} Daily Total,2,1,3,2,4,1,5,${2501+totIdx},6,4,7,0.5,8,5,9,0,20,${a.prec},21,gal,98,${1000+ch}`;
         }
-        return `9,${ch},1,Chan ${ch},2,0,3,0,4,1,5,0,6,0,98,${1000+ch}`;
+        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000+ch}`;
       }
       
+      // Digital output channels 71-75
       if (ch >= 71 && ch <= 75) {
         const idx = ch - 71;
         const doNum = idx + 1;
         const linkedAlarm = cfg.alarms.find(a => a.on && a.linkedDout === doNum);
         
         if (pumpCtrlEnabled && idx < 2) {
-          return `9,${ch},1,Pump${idx+1} CallToStart,2,1,3,1,4,1,5,${5501+idx},6,6,30,0,31,Off,32,On,98,${1000+ch}`;
+          return `9,${ch},1,Pump${idx+1} CallToStart,2,1,3,1,4,1,5,${5501+idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000+ch}`;
         } else if (linkedAlarm) {
-          return `9,${ch},1,${linkedAlarm.name},2,1,3,1,4,1,5,${301+idx},6,6,30,0,31,Off,32,On,98,${1000+ch}`;
+          return `9,${ch},1,${linkedAlarm.name},2,1,3,1,4,1,5,${301+idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000+ch}`;
         }
         const d = cfg.dout[idx];
-        return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${301+idx},6,6,30,0,31,Off,32,On,98,${1000+ch}`;
+        return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${301+idx},6,6,7,0.5,8,0,9,0,30,0,31,Off,32,On,98,${1000+ch}`;
       }
       
+      // P2P receive channels 95-99
       if (ch >= 95 && ch <= 99) {
         const pushIdx = ch - 95;
         const push = cfg.push[pushIdx];
         if (push && push.on && push.mode === 2) {
-          return `9,${ch},1,${push.name},2,1,3,2,4,1,5,${1500+pushIdx},6,4,20,1,21,units,98,${1000+ch}`;
+          return `9,${ch},1,${push.name},2,1,3,2,4,1,5,${1500+pushIdx},6,0,7,0.5,8,0,9,1,20,1,21,${push.units || 'units'},98,${1000+ch}`;
         }
-        return `9,${ch},1,Chan ${ch},2,0,3,0,4,1,5,0,6,0,98,${1000+ch}`;
+        return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000+ch}`;
       }
-      if (ch >= 21 && ch <= 30) { const d = cfg.di[ch-21]; return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${200+ch-20},6,2,30,0,31,${d.lbl0},32,${d.lbl1},98,${1000+ch}`; }
-      if (ch >= 51 && ch <= 55) { const a = cfg.ai[ch-51]; return `9,${ch},1,${a.name},2,${a.on?1:0},3,2,4,1,5,${100+ch-50},6,4,20,${a.prec},21,${a.units},22,${a.delta},23,${a.debounce},98,${1000+ch}`; }
-      return `9,${ch},1,Chan ${ch},2,0,3,0,4,1,5,0,6,0,98,${1000+ch}`;
+      
+      // Digital input channels 21-30
+      if (ch >= 21 && ch <= 30) { 
+        const d = cfg.di[ch-21]; 
+        return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${200+ch-20},6,2,7,0.5,8,5,9,0,30,0,31,${d.lbl0},32,${d.lbl1},98,${1000+ch}`; 
+      }
+      
+      // Analog input channels 51-55
+      if (ch >= 51 && ch <= 55) { 
+        const a = cfg.ai[ch-51]; 
+        return `9,${ch},1,${a.name},2,${a.on?1:0},3,2,4,1,5,${100+ch-50},6,4,7,${a.delta.toFixed(1)},8,${a.debounce},9,0,20,${a.prec},21,${a.units},98,${1000+ch}`; 
+      }
+      
+      // Default for all other channels
+      return `9,${ch},1,User Chan ${ch},2,0,3,0,4,1,5,0,6,0,7,0.5,8,5,9,0,98,${1000+ch}`;
     }
 
     function generateLosantJson(cfg) {
