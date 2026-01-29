@@ -138,8 +138,8 @@
 
     const getDefault = () => ({
       site:{name:'Site Name',timezone:2,dstOffset:0,modbusId:126},template:null,
-      di:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DI${i+1}`,type:'status',lbl0:'Off',lbl1:'On',isPump:false,normalState:0})),
-      ai:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`AI${i+1}`,inputType:2,preset:'custom',zero:0,full:100,units:'units',prec:1,damp:0.5,delta:1,debounce:5,totalizer:false,totConv:60,minFlow:0})),
+      di:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`DI${i+1}`,type:'status',lbl0:'Off',lbl1:'On',isPump:false,normalState:0,delta:0.5,debounce:5,scroll:2})),
+      ai:Array(5).fill(0).map((_,i)=>({idx:i+1,on:false,name:`AI${i+1}`,inputType:2,preset:'custom',zero:0,full:100,units:'units',prec:1,damp:0.5,delta:1,debounce:5,scroll:4,totalizer:false,totConv:60,minFlow:0})),
       pumpCtrl:{on:false,mode:1,levelSrc:0,p1:0,p2:0,leadOn:10,lagOn:12,allOff:5,debounce:5,startDly:3},
       alarms:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Alarm${i+1}`,srcCh:0,srcType:'',alarmType:0,delay:0,alarmState:1,limitType:0,limit:0,hysteresis:0,popup:true,linkedDout:0,doutAction:'activate'})),
       push:Array(10).fill(0).map((_,i)=>({idx:i+1,on:false,name:`Push${i+1}`,mode:0,srcCh:0,delta:1,debounce:5,peerImei:'',units:'units'})),
@@ -288,6 +288,9 @@
               const idx = ch - 21;
               newCfg.di[idx].name = name;
               newCfg.di[idx].on = enabled;
+              newCfg.di[idx].scroll = p[6] ?? 2;
+              newCfg.di[idx].delta = p[7] ?? 0.5;
+              newCfg.di[idx].debounce = p[8] ?? 5;
               newCfg.di[idx].lbl0 = p[31] || 'Off';
               newCfg.di[idx].lbl1 = p[32] || 'On';
               if (p[31] === 'Stopped' && p[32] === 'Running') {
@@ -301,10 +304,11 @@
               const idx = ch - 51;
               newCfg.ai[idx].name = name;
               newCfg.ai[idx].on = enabled;
-              newCfg.ai[idx].units = p[21] || 'units';
+              newCfg.ai[idx].scroll = p[6] ?? 4;
+              newCfg.ai[idx].delta = p[7] ?? 1;
+              newCfg.ai[idx].debounce = p[8] ?? 5;
               newCfg.ai[idx].prec = p[20] ?? 1;
-              newCfg.ai[idx].delta = p[7] ?? 1;      // delta is at field 7
-              newCfg.ai[idx].debounce = p[8] ?? 5;   // deltadeb is at field 8
+              newCfg.ai[idx].units = p[21] || 'units';
             }
             
             // P2P receive channels 95-99
@@ -379,14 +383,23 @@
             }
           }
           
-          // Line 36: Digital outputs - check for alarm links
+          // Line 36: Digital outputs
           if (p.lineType === 36 && p.idx >= 1 && p.idx <= 5) {
-            const doNum = p.idx;
+            const idx = p.idx - 1;
+            newCfg.dout[idx].name = p[1] || `DO${p.idx}`;
+            newCfg.dout[idx].on = p[2] === 1;
+            newCfg.dout[idx].srcReg = p[3] ?? 0;
+            newCfg.dout[idx].srcActiveState = p[5] ?? 1;
+            newCfg.dout[idx].outNotActiveSrc = p[6] ?? 0;
+            newCfg.dout[idx].outActiveSrc = p[7] ?? 1;
+            newCfg.dout[idx].duration = p[8] ?? 0;
+            
+            // Check for alarm links
             const srcReg = p[3];
             if (srcReg >= 3501 && srcReg <= 3510) {
               const alarmIdx = srcReg - 3501;
               if (alarmIdx < 10) {
-                newCfg.alarms[alarmIdx].linkedDout = doNum;
+                newCfg.alarms[alarmIdx].linkedDout = p.idx;
                 newCfg.alarms[alarmIdx].doutAction = p[7] === 1 ? 'activate' : 'deactivate';
               }
             }
@@ -1054,13 +1067,13 @@
       // Digital input channels 21-30
       if (ch >= 21 && ch <= 30) { 
         const d = cfg.di[ch-21]; 
-        return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${200+ch-20},6,2,7,0.5,8,5,9,0,30,0,31,${d.lbl0},32,${d.lbl1},98,${1000+ch}`; 
+        return `9,${ch},1,${d.name},2,${d.on?1:0},3,1,4,1,5,${200+ch-20},6,${d.scroll},7,${d.delta},8,${d.debounce},9,0,30,0,31,${d.lbl0},32,${d.lbl1},98,${1000+ch}`; 
       }
       
       // Analog input channels 51-55
       if (ch >= 51 && ch <= 55) { 
         const a = cfg.ai[ch-51]; 
-        return `9,${ch},1,${a.name},2,${a.on?1:0},3,2,4,1,5,${100+ch-50},6,4,7,${a.delta.toFixed(1)},8,${a.debounce},9,0,20,${a.prec},21,${a.units},98,${1000+ch}`; 
+        return `9,${ch},1,${a.name},2,${a.on?1:0},3,2,4,1,5,${100+ch-50},6,${a.scroll},7,${a.delta},8,${a.debounce},9,0,20,${a.prec},21,${a.units},98,${1000+ch}`; 
       }
       
       // Default for all other channels
