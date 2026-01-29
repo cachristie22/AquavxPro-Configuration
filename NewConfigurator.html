@@ -175,7 +175,8 @@
       const reset = () => { if(confirm('Reset all?')) { setCfg(getDefault()); setStep(0); localStorage.removeItem(STORAGE_KEY); }};
 
       const parseConfigFile = (text) => {
-        const rawLines = text.split('\n');
+        // Split by any combination of CR and LF to handle various line ending formats
+        const rawLines = text.split(/\r\n|\r|\n/);
         const newCfg = getDefault();
         const originalLines = [];
         
